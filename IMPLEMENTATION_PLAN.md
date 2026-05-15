@@ -124,7 +124,7 @@ Do not forward these to the training script.
 
 ---
 
-## 3. Bracket-aware sweep parsing
+## 3. Bracket-aware sweep parsing ✅
 
 ### Files
 

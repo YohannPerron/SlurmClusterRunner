@@ -7,6 +7,7 @@ from newrunner.args import (
     ControlParams,
     parse_cli,
     split_control_params,
+    split_control_param_sweep,
     validate_control_params,
 )
 from newrunner.config import load_partitions
@@ -54,6 +55,29 @@ def test_defaults_applied():
 
     assert controls == ControlParams(gpu=1, dev=False)
     assert forwarded == ["lr=1e-3"]
+
+
+def test_control_params_can_sweep_gpu_and_batch():
+    plan, forwarded = split_control_param_sweep(["GPU=2,4", "BATCH=64,128", "lr=1e-3"])
+
+    assert forwarded == ["lr=1e-3"]
+    assert [(controls.gpu, controls.batch) for controls in plan.controls] == [
+        (2, 64),
+        (2, 128),
+        (4, 64),
+        (4, 128),
+    ]
+    assert plan.variable_params == [
+        {"GPU": "2", "BATCH": "64"},
+        {"GPU": "2", "BATCH": "128"},
+        {"GPU": "4", "BATCH": "64"},
+        {"GPU": "4", "BATCH": "128"},
+    ]
+
+
+def test_compat_control_parser_rejects_sweep():
+    with pytest.raises(ArgumentError, match="sweeps"):
+        split_control_params(["GPU=2,4"])
 
 
 @pytest.mark.parametrize("token, match", [("GPU=nope", "GPU"), ("BATCH=0", "BATCH"), ("DEV=maybe", "DEV")])

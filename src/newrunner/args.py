@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+from itertools import product
 from typing import Iterable
 
 from newrunner.models import PartitionConfig
@@ -52,6 +53,19 @@ class ControlParams:
     tag: str | None = None
 
 
+@dataclass(frozen=True)
+class ControlSweepPlan:
+    """Expanded launcher control parameters.
+
+    ``variable_params`` contains control axes with more than one value so later
+    path planning can include values such as ``GPU=4`` or ``BATCH=128`` in run
+    names.
+    """
+
+    controls: list[ControlParams]
+    variable_params: list[dict[str, str]]
+
+
 def parse_cli(argv: Iterable[str]) -> RawCliArgs:
     """Parse the stable CLI shape.
 
@@ -68,7 +82,25 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
 
 
 def split_control_params(tokens: Iterable[str]) -> tuple[ControlParams, list[str]]:
-    """Extract launcher control params and return remaining forwarded tokens."""
+    """Extract launcher control params and return remaining forwarded tokens.
+
+    This compatibility helper requires control parameters to have a single value.
+    Use :func:`split_control_param_sweep` when sweep expansion is desired.
+    """
+
+    plan, forwarded = split_control_param_sweep(tokens)
+    if len(plan.controls) != 1:
+        raise ArgumentError("Control parameter sweeps require split_control_param_sweep")
+    return plan.controls[0], forwarded
+
+
+def split_control_param_sweep(tokens: Iterable[str]) -> tuple[ControlSweepPlan, list[str]]:
+    """Extract and expand launcher control parameter sweeps.
+
+    Examples: ``GPU=2,4`` expands to two ``ControlParams`` objects with
+    ``gpu == 2`` and ``gpu == 4``; ``BATCH=64,128`` behaves similarly.
+    Non-control tokens are returned unchanged for script/Hydra sweep parsing.
+    """
 
     values: dict[str, str] = {}
     forwarded: list[str] = []
@@ -79,6 +111,27 @@ def split_control_params(tokens: Iterable[str]) -> tuple[ControlParams, list[str
         else:
             forwarded.append(token)
 
+    axes = {key: _split_bracket_aware(value) for key, value in values.items()}
+    for key, axis_values in axes.items():
+        if not axis_values:
+            raise ArgumentError(f"{key} must have at least one value")
+
+    keys = list(axes)
+    combinations = product(*(axes[key] for key in keys)) if keys else [()]
+    controls: list[ControlParams] = []
+    variable_params: list[dict[str, str]] = []
+    variable_keys = {key for key, axis_values in axes.items() if len(axis_values) > 1}
+
+    for combination in combinations:
+        selected = dict(zip(keys, combination, strict=True))
+        control = _build_controls(selected)
+        controls.append(control)
+        variable_params.append({key: selected[key] for key in keys if key in variable_keys})
+
+    return ControlSweepPlan(controls=controls, variable_params=variable_params), forwarded
+
+
+def _build_controls(values: dict[str, str]) -> ControlParams:
     controls = ControlParams(
         name=_optional(values.get("NAME")),
         gpu=_int(values.get("GPU"), "GPU", default=1),
@@ -93,7 +146,7 @@ def split_control_params(tokens: Iterable[str]) -> tuple[ControlParams, list[str
     )
     if controls.partition and controls.gpu_type:
         raise ArgumentError("Use PARTITION, not both PARTITION and deprecated GPU_TYPE")
-    return controls, forwarded
+    return controls
 
 
 def validate_control_params(controls: ControlParams, partition: PartitionConfig) -> None:
@@ -101,6 +154,33 @@ def validate_control_params(controls: ControlParams, partition: PartitionConfig)
 
     if partition.slurm.require_tag and not controls.tag:
         raise ArgumentError(f"TAG is required for partition '{partition.name}'")
+
+
+def _split_bracket_aware(value: str) -> list[str]:
+    parts: list[str] = []
+    start = 0
+    stack: list[str] = []
+    quote: str | None = None
+    pairs = {"[": "]", "(": ")", "{": "}"}
+    for index, char in enumerate(value):
+        if quote is not None:
+            if char == quote:
+                quote = None
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            continue
+        if char in pairs:
+            stack.append(pairs[char])
+            continue
+        if stack and char == stack[-1]:
+            stack.pop()
+            continue
+        if char == "," and not stack:
+            parts.append(value[start:index])
+            start = index + 1
+    parts.append(value[start:])
+    return parts
 
 
 def _optional(value: str | None) -> str | None:
