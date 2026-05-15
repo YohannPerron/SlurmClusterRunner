@@ -33,7 +33,7 @@ uv add --dev pytest ruff mypy
 
 ---
 
-## 1. Configuration loading
+## 1. Configuration loading ✅
 
 Implement YAML partition loading first.
 
@@ -68,7 +68,7 @@ Implement YAML partition loading first.
 
 ---
 
-## 2. CLI and control parameter parsing
+## 2. CLI and control parameter parsing ✅
 
 ### Files
 
