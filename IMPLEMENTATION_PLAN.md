@@ -1,6 +1,6 @@
 # NewRunner Implementation Plan
 
-## 0. Bootstrap the project
+## 0. Bootstrap the project ✅
 
 Create a proper Python package skeleton:
 
