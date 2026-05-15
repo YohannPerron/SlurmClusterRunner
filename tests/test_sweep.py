@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from newrunner.sweep import parse_sweep, split_bracket_aware
+import pytest
+
+from newrunner.sweep import SweepConfirmationRequired, parse_sweep, split_bracket_aware
 
 
 def test_split_bracket_aware_preserves_bracketed_commas():
@@ -61,13 +63,23 @@ def test_variable_params_identified_for_output_names():
     assert plan.jobs[-1].variable_params == {"data": "b", "arg2": "bar"}
 
 
-def test_control_parameters_are_swept_before_control_detection():
-    plan = parse_sweep(["GPU=2,4", "BATCH=64,128", "lr=1e-3"])
+def test_allowed_control_parameters_are_swept_before_control_detection():
+    plan = parse_sweep(["GPU=2,4", "PARTITION=a,b", "BATCH=64,128", "lr=1e-3"])
 
-    assert [job.tokens for job in plan.jobs] == [
-        ["GPU=2", "BATCH=64", "lr=1e-3"],
-        ["GPU=2", "BATCH=128", "lr=1e-3"],
-        ["GPU=4", "BATCH=64", "lr=1e-3"],
-        ["GPU=4", "BATCH=128", "lr=1e-3"],
-    ]
-    assert plan.jobs[-1].variable_params == {"GPU": "4", "BATCH": "128"}
+    assert len(plan.jobs) == 8
+    assert plan.jobs[0].tokens == ["GPU=2", "PARTITION=a", "BATCH=64", "lr=1e-3"]
+    assert plan.jobs[-1].tokens == ["GPU=4", "PARTITION=b", "BATCH=128", "lr=1e-3"]
+    assert plan.jobs[-1].variable_params == {"GPU": "4", "PARTITION": "b", "BATCH": "128"}
+
+
+def test_other_control_parameter_sweeps_require_confirmation():
+    with pytest.raises(SweepConfirmationRequired) as exc_info:
+        parse_sweep(["TIME=1,2", "GPU=2,4"])
+
+    assert exc_info.value.control_names == ["TIME"]
+
+
+def test_confirmed_other_control_parameter_sweeps_are_allowed():
+    plan = parse_sweep(["TIME=1,2"], confirm_control_sweeps=True)
+
+    assert [job.tokens for job in plan.jobs] == [["TIME=1"], ["TIME=2"]]

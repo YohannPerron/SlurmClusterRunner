@@ -35,6 +35,7 @@ class RawCliArgs:
     project_path: str
     executable: str
     tokens: list[str]
+    allow_control_sweeps: bool = False
 
 
 @dataclass(frozen=True)
@@ -74,11 +75,21 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
     """
 
     parser = argparse.ArgumentParser(prog="newrunner")
+    parser.add_argument(
+        "--allow-control-sweeps",
+        action="store_true",
+        help="Allow sweeping control parameters other than GPU, PARTITION, and BATCH.",
+    )
     parser.add_argument("project_path")
     parser.add_argument("executable")
     parser.add_argument("tokens", nargs="*")
     ns = parser.parse_args(list(argv))
-    return RawCliArgs(ns.project_path, ns.executable, list(ns.tokens))
+    return RawCliArgs(
+        ns.project_path,
+        ns.executable,
+        list(ns.tokens),
+        allow_control_sweeps=ns.allow_control_sweeps,
+    )
 
 
 def split_control_params(tokens: Iterable[str]) -> tuple[ControlParams, list[str]]:

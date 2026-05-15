@@ -6,6 +6,19 @@ from dataclasses import dataclass
 from itertools import product
 from typing import Iterable
 
+from newrunner.args import CONTROL_PARAMS
+
+
+CONTROL_SWEEP_ALLOWED = {"GPU", "PARTITION", "BATCH"}
+
+
+class SweepConfirmationRequired(ValueError):
+    """Raised when a risky control-parameter sweep needs user confirmation."""
+
+    def __init__(self, control_names: Iterable[str]) -> None:
+        self.control_names = sorted(set(control_names))
+        joined = ", ".join(self.control_names)
+        super().__init__(f"Sweeping control parameter(s) requires confirmation: {joined}")
 
 
 @dataclass(frozen=True)
@@ -96,14 +109,22 @@ def split_bracket_aware(value: str) -> list[str]:
     return parts
 
 
-def parse_sweep(tokens: Iterable[str]) -> SweepPlan:
-    """Classify forwarded tokens and expand them as a Cartesian product."""
+def parse_sweep(tokens: Iterable[str], *, confirm_control_sweeps: bool = False) -> SweepPlan:
+    """Classify tokens and expand them as a Cartesian product.
+
+    ``GPU``, ``PARTITION`` and ``BATCH`` can be swept without confirmation.
+    Sweeping any other launcher control parameter requires confirmation because
+    it can silently create surprising job variants.
+    """
 
     axes: list[SweepAxis] = []
+    confirmation_required: list[str] = []
     for position, token in enumerate(tokens):
         key, sep, raw_value = token.partition("=")
         if sep:
             values = split_bracket_aware(raw_value)
+            if key in CONTROL_PARAMS and key not in CONTROL_SWEEP_ALLOWED and len(values) > 1:
+                confirmation_required.append(key)
             axes.append(SweepAxis(name=key, values=values, is_hydra=True, position=position))
         else:
             values = split_bracket_aware(token)
@@ -115,6 +136,9 @@ def parse_sweep(tokens: Iterable[str]) -> SweepPlan:
                     position=position,
                 )
             )
+
+    if confirmation_required and not confirm_control_sweeps:
+        raise SweepConfirmationRequired(confirmation_required)
 
     jobs: list[SweepJob] = []
     value_product = product(*(axis.values for axis in axes)) if axes else [()]

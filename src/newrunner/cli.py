@@ -6,14 +6,25 @@ import sys
 
 from newrunner.args import ArgumentError, parse_cli, split_control_params, validate_control_params
 from newrunner.config import ConfigError, load_selected_partition
-from newrunner.sweep import parse_sweep
+from newrunner.sweep import SweepConfirmationRequired, parse_sweep
 
 
 def main(argv: list[str] | None = None) -> None:
     """Entry point for the ``newrunner`` command."""
 
     raw = parse_cli(sys.argv[1:] if argv is None else argv)
-    sweep = parse_sweep(raw.tokens)
+    try:
+        sweep = parse_sweep(
+            raw.tokens,
+            confirm_control_sweeps=raw.allow_control_sweeps,
+        )
+    except SweepConfirmationRequired as exc:
+        names = ", ".join(exc.control_names)
+        raise SystemExit(
+            "Sweeping control parameter(s) "
+            f"{names} requires --allow-control-sweeps. "
+            "GPU, PARTITION, and BATCH may be swept without this flag."
+        ) from exc
     parsed_jobs = []
     try:
         for job in sweep.jobs:

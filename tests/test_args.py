@@ -19,6 +19,16 @@ def test_parse_cli_shape():
     assert raw.project_path == "/proj"
     assert raw.executable == "train.py"
     assert raw.tokens == ["GPU=2", "lr=1e-3"]
+    assert raw.allow_control_sweeps is False
+
+
+def test_parse_cli_allows_control_sweep_flag():
+    raw = parse_cli(["--allow-control-sweeps", "/proj", "train.py", "TIME=1,2"])
+
+    assert raw.project_path == "/proj"
+    assert raw.executable == "train.py"
+    assert raw.tokens == ["TIME=1,2"]
+    assert raw.allow_control_sweeps is True
 
 
 def test_control_params_removed_from_forwarded_args():
