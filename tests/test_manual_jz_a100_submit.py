@@ -16,6 +16,7 @@ from pathlib import PurePosixPath
 
 import pytest
 
+from newrunner.cli import orchestrate
 from newrunner.commands import SubprocessRunner
 from newrunner.config import load_selected_partition
 from newrunner.submit import submit_sbatch
@@ -73,3 +74,81 @@ def test_manual_submit_dummy_work_on_jz_a100() -> None:
     assert remote_script == script
     assert result.job_id.isdigit()
     print(f"Submitted JZ A100 dummy job {result.job_id} in {result.run_dir}")
+
+
+def test_manual_full_pipeline_dummy_sweep_on_jz_a100() -> None:
+    """Run the full NewRunner pipeline for a larger dummy sweep on JZ A100.
+
+    This exercises CLI parsing, partition loading, remote launcher sync, control
+    parameters, positional and Hydra sweeps, bracket-aware values, resource/time
+    planning, sbatch rendering, submission, and remote job-id writing. It
+    requires a clean local git checkout because the sync step intentionally
+    refuses dirty submissions.
+    """
+
+    partition = load_selected_partition(partition_name="jz-a100")
+    runner = SubprocessRunner()
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    remote_project = str(
+        PurePosixPath(partition.paths.log_dir)
+        / "manual-newrunner-tests"
+        / f"full-pipeline-project-{stamp}"
+    )
+    remote_script = PurePosixPath(remote_project) / "dummy_train.py"
+    script_source = """#!/usr/bin/env python
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+print(\"newrunner full-pipeline dummy\")
+print(\"argv=\" + repr(sys.argv[1:]))
+run_dir = None
+for arg in sys.argv[1:]:
+    if arg.startswith(\"hydra.run.dir=\"):
+        run_dir = arg.split(\"=\", 1)[1]
+if run_dir:
+    path = Path(run_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    (path / \"dummy_done.txt\").write_text(\"ok\\n\")
+"""
+
+    runner.run(["ssh", partition.remote_host, f"mkdir -p {shlex.quote(remote_project)}"])
+    runner.run(
+        ["ssh", partition.remote_host, f"cat > {shlex.quote(str(remote_script))}"],
+        input=script_source,
+    )
+
+    summaries = orchestrate(
+        [
+            remote_project,
+            "dummy_train.py",
+            "PARTITION=jz-a100",
+            "NAME=manual-full-pipeline",
+            "GPU=1",
+            "BATCH=8,16",
+            "MINTIME=false",
+            "DEV=true",
+            "TIME=00:05:00",
+            "TAG=newrunner-manual-full-pipeline",
+            "pos_a,pos_b",
+            "dummy.value=1,2",
+            "dummy.list=[1,2,3]",
+            "dummy.flag=true",
+        ],
+        runner=runner,
+    )
+
+    assert len(summaries) == 8
+    assert {summary.submission.job_id.isdigit() for summary in summaries} == {True}
+    for summary in summaries:
+        runner.run(
+            ["ssh", partition.remote_host, f"test -s {shlex.quote(summary.submission.sbatch_path)}"]
+        )
+        runner.run(
+            ["ssh", partition.remote_host, f"test -s {shlex.quote(summary.paths.job_id_path)}"]
+        )
+        print(
+            "Submitted full-pipeline JZ A100 dummy job "
+            f"{summary.submission.job_id} in {summary.submission.run_dir}"
+        )
