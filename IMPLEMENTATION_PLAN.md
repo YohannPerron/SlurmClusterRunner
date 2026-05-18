@@ -321,7 +321,7 @@ srun python -u train.py ...
 
 ---
 
-## 7. Submission and job ID capture
+## 7. Submission and job ID capture  ✅
 
 ### Files
 
@@ -350,7 +350,7 @@ Mock `ssh`, `scp`/`rsync`, and `sbatch`.
 
 ---
 
-## 8. Remote version synchronization
+## 8. Remote version synchronization  ✅
 
 ### Files
 
@@ -431,7 +431,7 @@ Submitted:
 
 ---
 
-## 10. Job chaining
+## 10. Job chaining (skip for now)
 
 Defer implementation initially.
 
@@ -491,19 +491,3 @@ Important coverage:
 - WandB injection.
 - job ID parsing/writing.
 - remote sync decision logic.
-
----
-
-## Suggested implementation order
-
-1. Project skeleton and dependencies.
-2. Config models and YAML loading.
-3. CLI/control parsing.
-4. Sweep expansion.
-5. Resource/time validation.
-6. sbatch generation.
-7. Path/run directory planning.
-8. Submission abstraction and job ID parsing.
-9. Remote version sync.
-10. End-to-end CLI tests.
-11. Optional job chaining.
