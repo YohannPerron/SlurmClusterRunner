@@ -213,7 +213,7 @@ resources:
 
 ---
 
-## 5. Output/run directory planning
+## 5. Output/run directory planning ✅
 
 ### Files
 
@@ -241,7 +241,7 @@ Where:
 
 ---
 
-## 6. sbatch script generation
+## 6. sbatch script generation ✅
 
 ### Files
 
