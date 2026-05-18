@@ -159,7 +159,7 @@ Generate Cartesian products while preserving positional order.
 
 ---
 
-## 4. Resource calculation
+## 4. Resource calculation ✅
 
 ### Files
 
