@@ -3,62 +3,62 @@ gpu_type: MI300
 remote_host: ADA
 default: false
 slurm:
-  account: c1816178
-  job_name_prefix: tr
-  gres: gpu
-  partition: null
-  constraint: MI300
-  qos: null
-  dev_qos: null
-  max_time_hours: 24
-  default_time: '24:00:00'
-  dev_time: '2:00:00'
-  min_time: '19:00:00'
-  use_min_time_default: true
-  hint: nomultithread
-  signal: SIGUSR1@600
-  output: /lus/scratch/CT1/c1816178/SHARED/outputs/run%j.txt
-  error: /lus/scratch/CT1/c1816178/SHARED/outputs/run%j.txt
-  require_tag: false
+    account: c1816178
+    job_name_prefix: MI300
+    gres: gpu
+    partition: null
+    constraint: MI300
+    qos: null
+    dev_qos: null
+    max_time_hours: 24
+    default_time: "24:00:00"
+    dev_time: "2:00:00"
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lus/scratch/CT1/c1816178/SHARED/outputs/run%j.txt
+    error: /lus/scratch/CT1/c1816178/SHARED/outputs/run%j.txt
+    require_tag: false
 resources:
-  gpu_per_node: 4
-  require_full_node_gpu: true
-  cpu_per_gpu: 24
-  task_mode: per_gpu
-  exclusive: true
-  multi_gpu_overrides:
-    trainer: ddp
+    gpu_per_node: 4
+    require_full_node_gpu: true
+    cpu_per_gpu: 24
+    task_mode: per_gpu
+    exclusive: true
+    multi_gpu_overrides:
+        trainer: ddp
 modules:
-  purge: true
-  load: []
+    purge: true
+    load: []
 environment:
-  shell_init: /lus/home/CT1/c1816178/yperron/.bashrc
-  conda_env: archeao
-  pre_run:
-  - numactl -s
-  exports:
-    SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
-    PYTHONPATH: ./src/utils/
-    WANDB__SERVICE_WAIT: '300'
-    WANDB_INIT_TIMEOUT: '300'
-    WANDB_ERROR_REPORTING: 'false'
-    WANDB_MODE: offline
-  wandb:
-    mode: offline
-    set_name: true
-    set_group: true
+    shell_init: /lus/home/CT1/c1816178/yperron/.bashrc
+    conda_env: archeao
+    pre_run:
+        - numactl -s
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: ./src/utils/
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_INIT_TIMEOUT: "300"
+        WANDB_ERROR_REPORTING: "false"
+        WANDB_MODE: offline
+    wandb:
+        mode: offline
+        set_name: true
+        set_group: true
 paths:
-  remote_launcher_dir: /lus/home/CT1/c1816178/yperron/work/Utils
-  default_project_dir: ~/work/AnySat
-  data_dir: /lus/scratch/CT1/c1816178/SHARED/datasets/
-  log_dir: /lus/scratch/CT1/c1816178/SHARED/logs_AnySat/
+    remote_launcher_dir: /lus/home/CT1/c1816178/yperron/work/Utils
+    default_project_dir: ~/work/AnySat
+    data_dir: /lus/scratch/CT1/c1816178/SHARED/datasets/
+    log_dir: /lus/scratch/CT1/c1816178/SHARED/logs_AnySat/
 default_overrides:
-  num_workers: '8'
-  hydra/job_logging: default
-  hydra/hydra_logging: default
-  offline: 'True'
+    num_workers: "8"
+    hydra/job_logging: default
+    hydra/hydra_logging: default
+    offline: "True"
 features:
-  job_chaining: true
+    job_chaining: true
 launcher:
-  command_prefix: srun
+    command_prefix: srun
 project: AnySat

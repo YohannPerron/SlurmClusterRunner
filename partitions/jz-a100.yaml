@@ -4,7 +4,7 @@ remote_host: JZ
 default: true
 slurm:
   account: uhn@a100
-  job_name_prefix: tr
+  job_name_prefix: A100
   gres: gpu
   partition: null
   constraint: a100

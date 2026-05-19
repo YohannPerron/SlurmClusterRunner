@@ -3,59 +3,59 @@ gpu_type: V100
 remote_host: JZ
 default: false
 slurm:
-  account: ppm@v100
-  job_name_prefix: tr
-  gres: gpu
-  partition: null
-  constraint: v100-32g
-  qos: qos_gpu-t3
-  dev_qos: qos_gpu-dev
-  max_time_hours: 20
-  default_time: '19:59:59'
-  dev_time: 01:59:59
-  min_time: '19:00:00'
-  use_min_time_default: true
-  hint: nomultithread
-  signal: SIGUSR1@600
-  output: /lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/run%j.txt
-  error: /lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/run%j.txt
-  require_tag: false
+    account: ppm@v100
+    job_name_prefix: V100
+    gres: gpu
+    partition: null
+    constraint: v100-32g
+    qos: qos_gpu-t3
+    dev_qos: qos_gpu-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/run%j.txt
+    require_tag: false
 resources:
-  gpu_per_node: 4
-  cpu_per_gpu: 10
-  task_mode: per_gpu
-  exclusive: false
-  multi_gpu_overrides:
-    trainer: ddp
+    gpu_per_node: 4
+    cpu_per_gpu: 10
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
 modules:
-  purge: true
-  load:
-  - git
+    purge: true
+    load:
+        - git
 environment:
-  shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
-  conda_env: archeao
-  exports:
-    SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
-    PYTHONPATH: ./src/utils/
-    TMPDIR: /lustre/fsn1/projects/rech/msf/uih12tb/tmp
-    WANDB__SERVICE_WAIT: '300'
-    WANDB_MODE: offline
-  wandb:
-    mode: offline
-    set_name: true
-    set_group: true
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    conda_env: archeao
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: ./src/utils/
+        TMPDIR: /lustre/fsn1/projects/rech/msf/uih12tb/tmp
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_MODE: offline
+    wandb:
+        mode: offline
+        set_name: true
+        set_group: true
 paths:
-  remote_launcher_dir: work/Utils
-  default_project_dir: /lustre/fswork/projects/rech/ufh/ult23zz/AnySat
-  data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
-  log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/
+    remote_launcher_dir: work/Utils
+    default_project_dir: /lustre/fswork/projects/rech/ufh/ult23zz/AnySat
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/
 default_overrides:
-  num_workers: '4'
-  hydra/job_logging: default
-  hydra/hydra_logging: default
-  offline: 'True'
+    num_workers: "4"
+    hydra/job_logging: default
+    hydra/hydra_logging: default
+    offline: "True"
 features:
-  job_chaining: false
+    job_chaining: false
 launcher:
-  command_prefix: srun
+    command_prefix: srun
 project: AnySat
