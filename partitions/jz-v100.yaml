@@ -33,7 +33,7 @@ modules:
         - git
 environment:
     shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
-    conda_env: archeao
+    activate_command: micromamba activate archeao
     exports:
         SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
         PYTHONPATH: ./src/utils/

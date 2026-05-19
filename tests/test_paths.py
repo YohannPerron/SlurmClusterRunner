@@ -14,7 +14,7 @@ def partition() -> PartitionConfig:
         slurm=SlurmConfig(account=None, partition=None, qos=None, dev_qos=None, max_time_hours=1),
         resources=ResourcesConfig(gpu_per_node=4, cpu_per_gpu=8, task_mode="per_gpu"),
         paths=PathsConfig(remote_launcher_dir="/launcher", default_project_dir="/proj", data_dir="/data", log_dir="/logs"),
-        environment=EnvironmentConfig(conda_env="env"),
+        environment=EnvironmentConfig(),
     )
 
 

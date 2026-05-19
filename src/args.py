@@ -19,7 +19,6 @@ CONTROL_PARAMS = {
     "TIME",
     "MINTIME",
     "DEV",
-    "CONDA_ENV",
     "TAG",
 }
 
@@ -50,7 +49,6 @@ class ControlParams:
     time: str | None = None
     mintime: bool | None = None
     dev: bool = False
-    conda_env: str | None = None
     tag: str | None = None
 
 
@@ -157,7 +155,6 @@ def _build_controls(values: dict[str, str]) -> ControlParams:
         time=_time(values.get("TIME")),
         mintime=_optional_bool(values.get("MINTIME"), "MINTIME"),
         dev=_bool(values.get("DEV"), "DEV", default=False),
-        conda_env=_optional(values.get("CONDA_ENV")),
         tag=_optional(values.get("TAG")),
     )
     if controls.partition and controls.gpu_type:

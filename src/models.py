@@ -52,7 +52,7 @@ class PathsConfig:
 
 @dataclass(frozen=True)
 class EnvironmentConfig:
-    conda_env: str | None
+    activate_command: str | None = None
     shell_init: str | None = None
     exports: dict[str, Any] = field(default_factory=dict)
     pre_run: list[str] = field(default_factory=list)

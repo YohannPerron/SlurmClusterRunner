@@ -28,7 +28,6 @@ paths:
   data_dir: /remote/data
   log_dir: /remote/logs
 environment:
-  conda_env: env
   exports: {}
 """
 

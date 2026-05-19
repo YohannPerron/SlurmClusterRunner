@@ -46,7 +46,6 @@ def test_control_params_removed_from_forwarded_args():
             "TIME=02:00:00",
             "MINTIME=true",
             "DEV=yes",
-            "CONDA_ENV=env",
             "TAG=tag",
             "lr=1e-3",
             "checkpoint.ckpt",
@@ -60,7 +59,6 @@ def test_control_params_removed_from_forwarded_args():
     assert controls.time == "02:00:00"
     assert controls.mintime is True
     assert controls.dev is True
-    assert controls.conda_env == "env"
     assert controls.tag == "tag"
     assert forwarded == ["lr=1e-3", "checkpoint.ckpt"]
 
@@ -141,7 +139,6 @@ paths:
   data_dir: /remote/data
   log_dir: /remote/logs
 environment:
-  conda_env: env
   exports: {}
 """
     (tmp_path / "p1.yaml").write_text(text, encoding="utf-8")

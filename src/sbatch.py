@@ -32,7 +32,7 @@ class SbatchContext:
 def render_sbatch(ctx: SbatchContext) -> str:
     """Render a complete sbatch script for one expanded job."""
 
-    lines = ["#!/bin/bash", * _slurm_header(ctx), "", "set -euo pipefail", ""]
+    lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -euo pipefail", ""]
     lines.extend(_environment_lines(ctx))
     lines.append("")
     lines.append(f"cd {shlex.quote(ctx.project_path)}")
@@ -96,15 +96,14 @@ def _environment_lines(ctx: SbatchContext) -> list[str]:
     p = ctx.partition
     env = p.environment
     lines: list[str] = []
+    if env.shell_init:
+        lines.append(f"source {shlex.quote(env.shell_init)}")
     if p.modules.get("purge"):
         lines.append("module purge")
     for module in p.modules.get("load", []) or []:
         lines.append(f"module load {shlex.quote(str(module))}")
-    if env.shell_init:
-        lines.append(f"source {shlex.quote(env.shell_init)}")
-    conda_env = ctx.controls.conda_env or env.conda_env
-    if conda_env:
-        lines.append(f"conda activate {shlex.quote(conda_env)}")
+    if env.activate_command:
+        lines.append(str(env.activate_command))
     for key, value in env.exports.items():
         lines.append(f"export {key}={shlex.quote(str(value))}")
     lines.extend(env.pre_run)

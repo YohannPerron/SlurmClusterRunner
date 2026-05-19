@@ -195,11 +195,11 @@ def _paths(data: Mapping[str, Any], source_path: str) -> PathsConfig:
 
 
 def _environment(data: Mapping[str, Any], source_path: str) -> EnvironmentConfig:
-    for key in ("conda_env", "exports"):
+    for key in ("exports",):
         _require(data, key, f"{source_path}:environment")
     known = set(EnvironmentConfig.__dataclass_fields__)
     return EnvironmentConfig(
-        conda_env=data.get("conda_env"),
+        activate_command=data.get("activate_command"),
         shell_init=data.get("shell_init"),
         exports=dict(data.get("exports") or {}),
         pre_run=list(data.get("pre_run") or []),

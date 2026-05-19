@@ -36,7 +36,7 @@ def partition() -> PartitionConfig:
         ),
         paths=PathsConfig(remote_launcher_dir="/launcher", default_project_dir="/proj", data_dir="/data", log_dir="/logs"),
         environment=EnvironmentConfig(
-            conda_env="base",
+            activate_command="env activate custom",
             shell_init="/home/me/.bashrc",
             exports={"FOO": "bar baz"},
             pre_run=["echo ready"],
@@ -72,16 +72,62 @@ def test_header_contains_resource_directives_and_tag() -> None:
 
 
 def test_environment_and_command_are_rendered() -> None:
-    script = render_sbatch(context(ControlParams(gpu=1, conda_env="custom")))
+    script = render_sbatch(context(ControlParams(gpu=1)))
 
+    assert script.startswith("#!/bin/bash -l\n")
     assert "module purge" in script
     assert "module load cuda" in script
     assert "source /home/me/.bashrc" in script
-    assert "conda activate custom" in script
+    assert script.index("source /home/me/.bashrc") < script.index("module purge")
+    assert script.index("source /home/me/.bashrc") < script.index("module load cuda")
+    assert "env activate custom" in script
     assert "export FOO='bar baz'" in script
     assert "echo ready" in script
     assert "srun python -u train.py data.csv lr=1e-3" in script
     assert "hydra.run.dir=/logs/train/ts/0" in script
+
+
+def test_activate_command_is_used_for_activation() -> None:
+    base = partition()
+    p = replace(base, environment=replace(base.environment, activate_command="micromamba activate custom"))
+    controls = ControlParams(gpu=1)
+    job = parse_sweep(["lr=1e-3"]).jobs[0]
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+
+    script = render_sbatch(ctx)
+
+    assert "micromamba activate custom" in script
+    assert "env activate" not in script
+
+
+def test_activate_command_is_used_when_configured() -> None:
+    base = partition()
+    p = replace(base, environment=replace(base.environment, activate_command="env activate custom"))
+    controls = ControlParams(gpu=1)
+    job = parse_sweep(["lr=1e-3"]).jobs[0]
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+
+    script = render_sbatch(ctx)
+
+    assert "env activate custom" in script
+
+
+def test_null_activate_command_skips_activation() -> None:
+    base = partition()
+    p = replace(base, environment=replace(base.environment, activate_command=None))
+    controls = ControlParams(gpu=1)
+    job = parse_sweep(["lr=1e-3"]).jobs[0]
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+
+    script = render_sbatch(ctx)
+
+    assert "activate custom" not in script
 
 
 def test_batch_multi_gpu_and_wandb_overrides() -> None:
@@ -158,7 +204,7 @@ def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None
             log_dir="/lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/",
         ),
         environment=EnvironmentConfig(
-            conda_env="SatNew",
+            activate_command="env activate custom",
             shell_init="/linkhome/rech/genuvt01/uih12tb/.bashrc",
             exports={
                 "SRUN_CPUS_PER_TASK": "$SLURM_CPUS_PER_TASK",
@@ -217,7 +263,7 @@ def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None
     assert "module purge" in script
     assert "module load arch/h100" in script
     assert "module load git" in script
-    assert "conda activate SatNew" in script
+    assert "env activate custom" in script
     assert "cd /lustre/fswork/projects/rech/msf/uih12tb/AnySat" in script
     assert "srun python -u src/train.py" in script
     assert "trainer=ddp" in script

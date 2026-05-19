@@ -27,7 +27,6 @@ paths:
   data_dir: /remote/data
   log_dir: /remote/logs
 environment:
-  conda_env: env
   exports: {}
 """
 
@@ -49,6 +48,23 @@ def test_valid_partition_loads(tmp_path):
     assert partition.remote_host == "host"
     assert partition.resources.gpu_per_node == 8
     assert partition.paths.log_dir == "/remote/logs"
+    assert partition.environment.activate_command is None
+
+
+def test_activate_command_loads_and_can_be_null(tmp_path):
+    write_partition(tmp_path, text=BASE.replace("  exports: {}", "  activate_command: null\n  exports: {}"))
+
+    partition = load_partitions(tmp_path)[0]
+
+    assert partition.environment.activate_command is None
+
+
+def test_activate_command_loads(tmp_path):
+    write_partition(tmp_path, text=BASE.replace("  exports: {}", "  activate_command: env activate custom\n  exports: {}"))
+
+    partition = load_partitions(tmp_path)[0]
+
+    assert partition.environment.activate_command == "env activate custom"
 
 
 def test_missing_required_field_fails(tmp_path):
