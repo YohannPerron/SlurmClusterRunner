@@ -30,7 +30,9 @@ pytestmark = pytest.mark.skipif(
 def test_manual_submit_dummy_work_on_jz_a100() -> None:
     """Submit a tiny real job to the configured jz-a100 partition."""
 
+    print("[manual-jz-a100] loading partition jz-a100", flush=True)
     partition = load_selected_partition(partition_name="jz-a100")
+    print(f"[manual-jz-a100] remote host: {partition.remote_host}", flush=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = str(PurePosixPath(partition.paths.log_dir) / "manual-newrunner-tests" / stamp)
     qos = partition.slurm.dev_qos or partition.slurm.qos
@@ -60,6 +62,7 @@ def test_manual_submit_dummy_work_on_jz_a100() -> None:
 
     runner = SubprocessRunner()
     script = "\n".join(script_lines) + "\n"
+    print(f"[manual-jz-a100] submitting tiny sbatch in {run_dir}", flush=True)
     result = submit_sbatch(
         runner=runner,
         remote_host=partition.remote_host,
@@ -67,8 +70,10 @@ def test_manual_submit_dummy_work_on_jz_a100() -> None:
         script=script,
     )
 
+    print(f"[manual-jz-a100] submitted job {result.job_id}; verifying remote sbatch", flush=True)
     sbatch_file = PurePosixPath(result.sbatch_path)
     runner.run(["ssh", partition.remote_host, f"test -s {shlex.quote(str(sbatch_file))}"])
+    print(f"[manual-jz-a100] reading remote sbatch {sbatch_file}", flush=True)
     remote_script = runner.run(["ssh", partition.remote_host, f"cat {shlex.quote(str(sbatch_file))}"]).stdout
 
     assert remote_script == script
@@ -86,7 +91,9 @@ def test_manual_full_pipeline_dummy_sweep_on_jz_a100() -> None:
     refuses dirty submissions.
     """
 
+    print("[manual-jz-a100-full] loading partition jz-a100", flush=True)
     partition = load_selected_partition(partition_name="jz-a100")
+    print(f"[manual-jz-a100-full] remote host: {partition.remote_host}", flush=True)
     runner = SubprocessRunner()
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     remote_project = str(
@@ -113,12 +120,15 @@ if run_dir:
     (path / \"dummy_done.txt\").write_text(\"ok\\n\")
 """
 
+    print(f"[manual-jz-a100-full] creating remote project {remote_project}", flush=True)
     runner.run(["ssh", partition.remote_host, f"mkdir -p {shlex.quote(remote_project)}"])
+    print(f"[manual-jz-a100-full] writing remote dummy script {remote_script}", flush=True)
     runner.run(
         ["ssh", partition.remote_host, f"cat > {shlex.quote(str(remote_script))}"],
         input=script_source,
     )
 
+    print("[manual-jz-a100-full] starting orchestrate: sync + render + submit 8 jobs", flush=True)
     summaries = orchestrate(
         [
             remote_project,
@@ -139,9 +149,15 @@ if run_dir:
         runner=runner,
     )
 
+    print(f"[manual-jz-a100-full] orchestrate returned {len(summaries)} summaries", flush=True)
     assert len(summaries) == 8
     assert {summary.submission.job_id.isdigit() for summary in summaries} == {True}
-    for summary in summaries:
+    for i, summary in enumerate(summaries, start=1):
+        print(
+            f"[manual-jz-a100-full] verifying job {i}/8: "
+            f"{summary.submission.job_id}",
+            flush=True,
+        )
         runner.run(
             ["ssh", partition.remote_host, f"test -s {shlex.quote(summary.submission.sbatch_path)}"]
         )

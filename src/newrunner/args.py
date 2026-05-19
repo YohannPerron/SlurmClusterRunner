@@ -74,7 +74,7 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
     they can be positional script arguments or Hydra overrides.
     """
 
-    parser = argparse.ArgumentParser(prog="newrunner")
+    parser = argparse.ArgumentParser(prog="runner")
     parser.add_argument(
         "--allow-control-sweeps",
         action="store_true",

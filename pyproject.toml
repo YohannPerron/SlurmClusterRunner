@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-newrunner = "newrunner.cli:main"
+runner = "newrunner.cli:main"
 
 [build-system]
 requires = ["hatchling"]

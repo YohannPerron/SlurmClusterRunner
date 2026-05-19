@@ -29,7 +29,7 @@ class JobSummary:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Entry point for the ``newrunner`` command."""
+    """Entry point for the ``runner`` command."""
 
     try:
         summaries = orchestrate(sys.argv[1:] if argv is None else argv, runner=SubprocessRunner())
