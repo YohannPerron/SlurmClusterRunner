@@ -36,6 +36,7 @@ class RawCliArgs:
     executable: str
     tokens: list[str]
     allow_control_sweeps: bool = False
+    verbose: bool = False
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,12 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
         action="store_true",
         help="Allow sweeping control parameters other than GPU, PARTITION, and BATCH.",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Print external commands and timing information.",
+    )
     parser.add_argument("project_path")
     parser.add_argument("executable")
     parser.add_argument("tokens", nargs="*")
@@ -89,6 +96,7 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
         ns.executable,
         list(ns.tokens),
         allow_control_sweeps=ns.allow_control_sweeps,
+        verbose=ns.verbose,
     )
 
 

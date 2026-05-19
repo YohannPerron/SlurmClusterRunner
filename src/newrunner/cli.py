@@ -31,8 +31,9 @@ class JobSummary:
 def main(argv: list[str] | None = None) -> None:
     """Entry point for the ``runner`` command."""
 
+    actual_argv = sys.argv[1:] if argv is None else argv
     try:
-        summaries = orchestrate(sys.argv[1:] if argv is None else argv, runner=SubprocessRunner())
+        summaries = orchestrate(actual_argv, runner=SubprocessRunner(verbose=_verbose_requested(actual_argv)))
     except (
         ArgumentError,
         ConfigError,
@@ -55,6 +56,10 @@ def main(argv: list[str] | None = None) -> None:
             message = str(exc)
         raise SystemExit(message) from exc
     print_summary(summaries)
+
+
+def _verbose_requested(argv: list[str]) -> bool:
+    return "-v" in argv or "--verbose" in argv
 
 
 def orchestrate(argv: list[str], *, runner: CommandRunner) -> list[JobSummary]:

@@ -31,6 +31,7 @@ Then call it directly from bash/zsh/fish/etc.:
 ```bash
 runner --help
 runner <project_path> <executable> [ARG_OR_KEY=VALUE ...]
+runner -v <project_path> <executable> [ARG_OR_KEY=VALUE ...]
 ```
 
 To upgrade after pulling changes:
@@ -50,6 +51,8 @@ uv tool uninstall newrunner
 ```bash
 uv run runner <project_path> <executable> [ARG_OR_KEY=VALUE ...]
 ```
+
+Add `-v`/`--verbose` to print external `ssh`, `rsync`, `git`, and `sbatch` commands with timing information while debugging slow submissions.
 
 - `<project_path>` is the project directory on the remote cluster. Pass the configured default project path if you do not need a custom path.
 - `<executable>` is the Python script to run from inside `<project_path>`.
