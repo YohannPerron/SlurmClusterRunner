@@ -45,10 +45,12 @@ def plan_run_paths(
     """Build deterministic remote paths for one job.
 
     Layout:
-    ``<log_dir>/<task>/<timestamp>[-NAME][-var_names]/<i>_[values]/``.
+    ``<log_dir>/<executable_stem>[_DEV]/<timestamp>[-NAME][-var_names]/<i>_[values]/``.
     """
 
     task_name = sanitize_path_component(Path(executable).stem or "job")
+    if controls.dev:
+        task_name = f"{task_name}_DEV"
     name = sanitize_path_component(controls.name) if controls.name else None
     variable_params = dict(control_variable_params or {})
     variable_params.update(sweep_job.variable_params)

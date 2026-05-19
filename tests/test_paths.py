@@ -57,5 +57,12 @@ def test_control_variable_params_included() -> None:
     assert plan.display_name == "2_GPU=4"
 
 
+def test_dev_suffix_added_to_executable_log_folder() -> None:
+    job = parse_sweep([]).jobs[0]
+    plan = plan_run_paths(partition(), "train.py", ControlParams(dev=True), job, index=0, timestamp="ts")
+
+    assert plan.run_root == "/logs/train_DEV/ts"
+
+
 def test_sanitize_empty_component() -> None:
     assert sanitize_path_component(" /// ") == "value"

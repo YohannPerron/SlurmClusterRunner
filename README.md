@@ -147,7 +147,7 @@ For every expanded job, SlurmClusterRunner:
 Run directories are named like:
 
 ```text
-<log_dir>/<executable_stem>/<timestamp>-<NAME>-<variable_names>/<index>_<values>/
+<log_dir>/<executable_stem>[_DEV]/<timestamp>[-NAME][-var_names]/<index>_<values>/
 ```
 
 The CLI summary prints the selected partition, number of submitted jobs, remote host, run root, and job ids.

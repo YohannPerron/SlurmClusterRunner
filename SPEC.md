@@ -283,7 +283,7 @@ explicit project/log override is provided.
 
 ```text
 <paths.log_dir>/
-  <task_name>/
+  <executable_stem>[_DEV]/
     <YYYYMMDD-HH:MM>[-NAME][-var_params]/
       <i>_[var_param_values]/
         run.sbatch
