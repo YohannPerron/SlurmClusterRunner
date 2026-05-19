@@ -1,12 +1,12 @@
 from dataclasses import replace
 
-from newrunner.args import ControlParams
-from newrunner.models import EnvironmentConfig, PartitionConfig, PathsConfig, ResourcesConfig, SlurmConfig
-from newrunner.paths import plan_run_paths
-from newrunner.resources import calculate_resources
-from newrunner.sbatch import SbatchContext, render_sbatch
-from newrunner.sweep import parse_sweep
-from newrunner.time import resolve_time
+from src.args import ControlParams
+from src.models import EnvironmentConfig, PartitionConfig, PathsConfig, ResourcesConfig, SlurmConfig
+from src.paths import plan_run_paths
+from src.resources import calculate_resources
+from src.sbatch import SbatchContext, render_sbatch
+from src.sweep import parse_sweep
+from src.time import resolve_time
 
 
 def partition() -> PartitionConfig:

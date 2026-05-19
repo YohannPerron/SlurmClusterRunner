@@ -9,7 +9,7 @@ from typing import Any, Mapping
 
 import yaml
 
-from newrunner.models import (
+from src.models import (
     EnvironmentConfig,
     PartitionConfig,
     PathsConfig,

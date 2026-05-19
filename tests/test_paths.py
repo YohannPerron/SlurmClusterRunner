@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from newrunner.args import ControlParams
-from newrunner.models import EnvironmentConfig, PartitionConfig, PathsConfig, ResourcesConfig, SlurmConfig
-from newrunner.paths import invocation_stamp, plan_run_paths, sanitize_path_component
-from newrunner.sweep import parse_sweep
+from src.args import ControlParams
+from src.models import EnvironmentConfig, PartitionConfig, PathsConfig, ResourcesConfig, SlurmConfig
+from src.paths import invocation_stamp, plan_run_paths, sanitize_path_component
+from src.sweep import parse_sweep
 
 
 def partition() -> PartitionConfig:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from newrunner.config import load_partitions
-from newrunner.resources import ResourceError, calculate_resources
+from src.config import load_partitions
+from src.resources import ResourceError, calculate_resources
 
 
 BASE = """

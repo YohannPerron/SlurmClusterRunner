@@ -8,7 +8,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from newrunner.commands import CommandError, CommandRunner
+from src.commands import CommandError, CommandRunner
 
 
 class SyncError(RuntimeError):

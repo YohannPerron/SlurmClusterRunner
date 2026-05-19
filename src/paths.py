@@ -8,9 +8,9 @@ from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import Mapping
 
-from newrunner.args import ControlParams
-from newrunner.models import PartitionConfig
-from newrunner.sweep import SweepJob
+from src.args import ControlParams
+from src.models import PartitionConfig
+from src.sweep import SweepJob
 
 
 @dataclass(frozen=True)

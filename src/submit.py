@@ -7,7 +7,7 @@ import shlex
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-from newrunner.commands import CommandRunner
+from src.commands import CommandRunner
 
 _JOB_ID_RE = re.compile(r"Submitted\s+batch\s+job\s+(\d+)")
 

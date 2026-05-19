@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from newrunner.args import ControlParams
-from newrunner.config import load_partitions
-from newrunner.time import TimeError, parse_wall_time, resolve_time
+from src.args import ControlParams
+from src.config import load_partitions
+from src.time import TimeError, parse_wall_time, resolve_time
 
 
 BASE = """

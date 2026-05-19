@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any
 
-from newrunner.args import ControlParams
-from newrunner.models import PartitionConfig
-from newrunner.paths import RunPathPlan
-from newrunner.resources import ResourceRequest
-from newrunner.sweep import SweepJob
-from newrunner.time import TimeRequest, parse_wall_time
+from src.args import ControlParams
+from src.models import PartitionConfig
+from src.paths import RunPathPlan
+from src.resources import ResourceRequest
+from src.sweep import SweepJob
+from src.time import TimeRequest, parse_wall_time
 
 
 @dataclass(frozen=True)

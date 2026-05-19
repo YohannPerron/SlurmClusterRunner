@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from newrunner.config import ConfigError, load_partitions, select_partition
+from src.config import ConfigError, load_partitions, select_partition
 
 
 BASE = """

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from newrunner.args import (
+from src.args import (
     ArgumentError,
     ControlParams,
     parse_cli,
@@ -10,7 +10,7 @@ from newrunner.args import (
     split_control_param_sweep,
     validate_control_params,
 )
-from newrunner.config import load_partitions
+from src.config import load_partitions
 
 
 def test_parse_cli_shape():

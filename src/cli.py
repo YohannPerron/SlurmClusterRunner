@@ -5,16 +5,16 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 
-from newrunner.args import ArgumentError, CONTROL_PARAMS, parse_cli, split_control_params, validate_control_params
-from newrunner.commands import CommandError, CommandRunner, SubprocessRunner
-from newrunner.config import ConfigError, load_selected_partition
-from newrunner.paths import RunPathPlan, invocation_stamp, plan_run_paths
-from newrunner.resources import ResourceError, calculate_resources
-from newrunner.sbatch import SbatchContext, render_sbatch
-from newrunner.submit import SubmissionError, SubmissionResult, submit_sbatch
-from newrunner.sweep import SweepConfirmationRequired, SweepJob, parse_sweep
-from newrunner.sync import SyncError, sync_remote_launcher
-from newrunner.time import TimeError, resolve_time
+from src.args import ArgumentError, CONTROL_PARAMS, parse_cli, split_control_params, validate_control_params
+from src.commands import CommandError, CommandRunner, SubprocessRunner
+from src.config import ConfigError, load_selected_partition
+from src.paths import RunPathPlan, invocation_stamp, plan_run_paths
+from src.resources import ResourceError, calculate_resources
+from src.sbatch import SbatchContext, render_sbatch
+from src.submit import SubmissionError, SubmissionResult, submit_sbatch
+from src.sweep import SweepConfirmationRequired, SweepJob, parse_sweep
+from src.sync import SyncError, sync_remote_launcher
+from src.time import TimeError, resolve_time
 
 
 @dataclass(frozen=True)

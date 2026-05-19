@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from newrunner.commands import CommandError, CommandResult
-from newrunner.sync import sync_remote_launcher
+from src.commands import CommandError, CommandResult
+from src.sync import sync_remote_launcher
 
 
 class FakeRunner:

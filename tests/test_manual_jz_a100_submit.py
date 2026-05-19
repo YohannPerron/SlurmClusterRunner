@@ -16,10 +16,10 @@ from pathlib import PurePosixPath
 
 import pytest
 
-from newrunner.cli import orchestrate
-from newrunner.commands import SubprocessRunner
-from newrunner.config import load_selected_partition
-from newrunner.submit import submit_sbatch
+from src.cli import orchestrate
+from src.commands import SubprocessRunner
+from src.config import load_selected_partition
+from src.submit import submit_sbatch
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("NEWRUNNER_RUN_JZ_A100_SUBMIT") != "1",

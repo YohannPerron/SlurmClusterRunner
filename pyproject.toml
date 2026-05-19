@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-runner = "newrunner.cli:main"
+runner = "src.cli:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -24,3 +24,6 @@ dev = [
     "pytest>=9.0.3",
     "ruff>=0.15.13",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

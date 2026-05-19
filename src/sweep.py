@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from itertools import product
 from typing import Iterable
 
-from newrunner.args import CONTROL_PARAMS
+from src.args import CONTROL_PARAMS
 
 
 CONTROL_SWEEP_ALLOWED = {"GPU", "PARTITION", "BATCH"}

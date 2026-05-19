@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from newrunner.sweep import SweepConfirmationRequired, parse_sweep, split_bracket_aware
+from src.sweep import SweepConfirmationRequired, parse_sweep, split_bracket_aware
 
 
 def test_split_bracket_aware_preserves_bracketed_commas():

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from newrunner.commands import CommandResult
-from newrunner.submit import SubmissionError, parse_sbatch_job_id, submit_sbatch
+from src.commands import CommandResult
+from src.submit import SubmissionError, parse_sbatch_job_id, submit_sbatch
 
 
 class FakeRunner:

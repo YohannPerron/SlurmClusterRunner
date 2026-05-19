@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from newrunner.models import PartitionConfig
+from src.models import PartitionConfig
 
 
 class ResourceError(ValueError):

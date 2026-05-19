@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from itertools import product
 from typing import Iterable
 
-from newrunner.models import PartitionConfig
+from src.models import PartitionConfig
 
 
 CONTROL_PARAMS = {

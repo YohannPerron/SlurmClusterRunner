@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from newrunner.args import ControlParams
-from newrunner.models import PartitionConfig
+from src.args import ControlParams
+from src.models import PartitionConfig
 
 
 class TimeError(ValueError):
