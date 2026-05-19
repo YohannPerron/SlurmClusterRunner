@@ -39,6 +39,14 @@ def test_variable_params_included_in_root_and_job_dir() -> None:
     assert plan.job_id_path.endswith("/job_id.txt")
 
 
+def test_dotted_variable_param_names_use_last_element_in_log_paths() -> None:
+    job = parse_sweep(["model.network.encoder.spatial_encoder.mlp_ratio=2,4"]).jobs[0]
+    plan = plan_run_paths(partition(), "train.py", ControlParams(), job, index=0, timestamp="ts")
+
+    assert plan.run_root == "/logs/train/ts-mlp_ratio"
+    assert plan.display_name == "0_mlp_ratio=2"
+
+
 def test_positional_sweep_values_are_sanitized_but_not_named() -> None:
     job = parse_sweep(["data/a.csv,data/b.csv"]).jobs[1]
     plan = plan_run_paths(partition(), "scripts/run train.py", ControlParams(), job, index=1, timestamp="ts")

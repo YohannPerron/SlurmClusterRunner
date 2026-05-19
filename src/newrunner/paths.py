@@ -62,7 +62,7 @@ def plan_run_paths(
         key: value for key, value in variable_params.items() if not _is_positional_axis_name(key)
     }
     if named_variable_params:
-        names = "_".join(sanitize_path_component(key) for key in named_variable_params)
+        names = "_".join(_display_param_name(key) for key in named_variable_params)
         run_root_name += f"-{names}"
 
     value_suffix = "_".join(
@@ -89,7 +89,13 @@ def _display_param_component(key: str, value: str) -> str:
     sanitized_value = sanitize_path_component(value)
     if _is_positional_axis_name(key):
         return sanitized_value
-    return f"{sanitize_path_component(key)}={sanitized_value}"
+    return f"{_display_param_name(key)}={sanitized_value}"
+
+
+def _display_param_name(key: str) -> str:
+    """Return the compact parameter name used in log path components."""
+
+    return sanitize_path_component(key.rsplit(".", 1)[-1])
 
 
 def _is_positional_axis_name(key: str) -> bool:
