@@ -14,21 +14,26 @@ from newrunner.config import load_partitions
 
 
 def test_parse_cli_shape():
-    raw = parse_cli(["/proj", "train.py", "GPU=2", "lr=1e-3"])
+    raw = parse_cli(["src/train.py", "GPU=2", "lr=1e-3"])
 
-    assert raw.project_path == "/proj"
-    assert raw.executable == "train.py"
+    assert raw.executable == "src/train.py"
     assert raw.tokens == ["GPU=2", "lr=1e-3"]
     assert raw.allow_control_sweeps is False
 
 
 def test_parse_cli_allows_control_sweep_flag():
-    raw = parse_cli(["--allow-control-sweeps", "/proj", "train.py", "TIME=1,2"])
+    raw = parse_cli(["--allow-control-sweeps", "train.py", "TIME=1,2"])
 
-    assert raw.project_path == "/proj"
     assert raw.executable == "train.py"
     assert raw.tokens == ["TIME=1,2"]
     assert raw.allow_control_sweeps is True
+
+
+def test_parse_cli_uses_first_positional_as_executable():
+    raw = parse_cli(["src/train.py", "exp=GeoPlex_Uni_MAE", "GPU=8"])
+
+    assert raw.executable == "src/train.py"
+    assert raw.tokens == ["exp=GeoPlex_Uni_MAE", "GPU=8"]
 
 
 def test_control_params_removed_from_forwarded_args():

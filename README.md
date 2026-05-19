@@ -30,8 +30,8 @@ Then call it directly from bash/zsh/fish/etc.:
 
 ```bash
 runner --help
-runner <project_path> <executable> [ARG_OR_KEY=VALUE ...]
-runner -v <project_path> <executable> [ARG_OR_KEY=VALUE ...]
+runner <executable> [ARG_OR_KEY=VALUE ...]
+runner -v <executable> [ARG_OR_KEY=VALUE ...]
 ```
 
 To upgrade after pulling changes:
@@ -49,19 +49,18 @@ uv tool uninstall slurmclusterrunner
 ## Basic usage
 
 ```bash
-uv run runner <project_path> <executable> [ARG_OR_KEY=VALUE ...]
+uv run runner <executable> [ARG_OR_KEY=VALUE ...]
 ```
 
 Add `-v`/`--verbose` to print external `ssh`, `rsync`, `git`, and `sbatch` commands with timing information while debugging slow submissions.
 
-- `<project_path>` is the project directory on the remote cluster. Pass the configured default project path if you do not need a custom path.
-- `<executable>` is the Python script to run from inside `<project_path>`.
+- `<executable>` is the Python script to run from inside the selected partition's configured `paths.default_project_dir`.
 - Remaining tokens are either forwarded positional arguments or Hydra-style `key=value` overrides.
 
 Example:
 
 ```bash
-uv run runner /lustre/fswork/projects/rech/ufh/ult23zz/AnySat train.py \
+uv run runner train.py \
   NAME=baseline \
   PARTITION=jz-a100 \
   GPU=4 \
@@ -99,7 +98,7 @@ Boolean values accept forms like `true/false`, `yes/no`, `1/0`, and `on/off`.
 Sweeping `GPU`, `PARTITION`, and `BATCH` is allowed by default. Sweeping other control parameters requires:
 
 ```bash
-uv run runner --allow-control-sweeps <project_path> <executable> NAME=a,b ...
+uv run runner --allow-control-sweeps <executable> NAME=a,b ...
 ```
 
 ## Parameter sweeps
@@ -107,19 +106,19 @@ uv run runner --allow-control-sweeps <project_path> <executable> NAME=a,b ...
 Any comma-separated value creates a sweep axis. SlurmClusterRunner expands all axes as a Cartesian product.
 
 ```bash
-uv run runner /remote/project train.py PARTITION=jz-a100 seed=1,2 optimizer=adam,sgd
+uv run runner train.py PARTITION=jz-a100 seed=1,2 optimizer=adam,sgd
 ```
 
 Bracketed or quoted commas are preserved:
 
 ```bash
-uv run runner /remote/project train.py 'model.layers=[64,128,256]' 'name="a,b"'
+uv run runner train.py 'model.layers=[64,128,256]' 'name="a,b"'
 ```
 
 Positional arguments can also be swept and keep their original order:
 
 ```bash
-uv run runner /remote/project scripts/eval.py \
+uv run runner scripts/eval.py \
   checkpoint_a.ckpt,checkpoint_b.ckpt \
   val \
   seed=1,2

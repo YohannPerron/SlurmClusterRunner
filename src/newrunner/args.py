@@ -32,7 +32,6 @@ class ArgumentError(ValueError):
 class RawCliArgs:
     """Top-level parsed CLI arguments before control extraction."""
 
-    project_path: str
     executable: str
     tokens: list[str]
     allow_control_sweeps: bool = False
@@ -87,12 +86,10 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
         action="store_true",
         help="Print external commands and timing information.",
     )
-    parser.add_argument("project_path")
     parser.add_argument("executable")
     parser.add_argument("tokens", nargs="*")
     ns = parser.parse_args(list(argv))
     return RawCliArgs(
-        ns.project_path,
         ns.executable,
         list(ns.tokens),
         allow_control_sweeps=ns.allow_control_sweeps,

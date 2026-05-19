@@ -102,7 +102,7 @@ def orchestrate(argv: list[str], *, runner: CommandRunner) -> list[JobSummary]:
         )
         ctx = SbatchContext(
             partition=partition,
-            project_path=raw.project_path or partition.paths.default_project_dir,
+            project_path=partition.paths.default_project_dir,
             executable=raw.executable,
             controls=controls,
             sweep_job=clean_job,
