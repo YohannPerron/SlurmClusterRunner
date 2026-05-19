@@ -1,6 +1,6 @@
-# NewRunner
+# SlurmClusterRunner
 
-NewRunner is a Python CLI for launching SLURM jobs from a local machine. It reads cluster/partition definitions from YAML, expands Hydra-style and positional parameter sweeps, renders one `run.sbatch` file per expanded job, submits each job over SSH, and writes the submitted SLURM job id to `job_id.txt` in the remote run directory.
+SlurmClusterRunner is a Python CLI for launching SLURM jobs from a local machine. It reads cluster/partition definitions from YAML, expands Hydra-style and positional parameter sweeps, renders one `run.sbatch` file per expanded job, submits each job over SSH, and writes the submitted SLURM job id to `job_id.txt` in the remote run directory.
 
 ## Installation
 
@@ -13,7 +13,7 @@ uv sync
 uv run runner --help
 ```
 
-To install NewRunner as a normal shell command (`runner`) from this checkout:
+To install SlurmClusterRunner as a normal shell command (`runner`) from this checkout:
 
 ```bash
 uv tool install -e .
@@ -43,7 +43,7 @@ uv tool install -e . --reinstall
 To uninstall:
 
 ```bash
-uv tool uninstall newrunner
+uv tool uninstall slurmclusterrunner
 ```
 
 ## Basic usage
@@ -79,14 +79,14 @@ srun python -u train.py model=resnet lr=1e-3 data.batch_size=32 trainer=ddp ...
 
 ## Control parameters
 
-Control parameters are consumed by NewRunner and are not forwarded directly to your script.
+Control parameters are consumed by SlurmClusterRunner and are not forwarded directly to your script.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
 | `NAME` | none | Human-readable run label used in SLURM job names and log directory names. |
 | `PARTITION` | configured default | Selects a YAML file from `partitions/` by its `name`. |
 | `GPU` | `1` | Total GPUs requested for one job. Multi-node requests must be divisible by `resources.gpu_per_node`. |
-| `BATCH` | none | Total batch size. NewRunner injects `data.batch_size=BATCH/GPU`; `BATCH` must be divisible by `GPU`. |
+| `BATCH` | none | Total batch size. SlurmClusterRunner injects `data.batch_size=BATCH/GPU`; `BATCH` must be divisible by `GPU`. |
 | `TIME` | partition default/max | Wall time as `HH:MM:SS` or integer hours. |
 | `MINTIME` | partition default | Boolean controlling whether `#SBATCH --time-min` is emitted when configured. |
 | `DEV` | `false` | Boolean. Uses `slurm.dev_qos` and `slurm.dev_time` when available. |
@@ -104,7 +104,7 @@ uv run runner --allow-control-sweeps <project_path> <executable> NAME=a,b ...
 
 ## Parameter sweeps
 
-Any comma-separated value creates a sweep axis. NewRunner expands all axes as a Cartesian product.
+Any comma-separated value creates a sweep axis. SlurmClusterRunner expands all axes as a Cartesian product.
 
 ```bash
 uv run runner /remote/project train.py PARTITION=jz-a100 seed=1,2 optimizer=adam,sgd
@@ -134,9 +134,9 @@ python -u scripts/eval.py checkpoint_b.ckpt val seed=1
 python -u scripts/eval.py checkpoint_b.ckpt val seed=2
 ```
 
-## What NewRunner creates remotely
+## What SlurmClusterRunner creates remotely
 
-For every expanded job, NewRunner:
+For every expanded job, SlurmClusterRunner:
 
 1. Verifies/synchronizes the local launcher checkout to `paths.remote_launcher_dir` on the selected cluster using `rsync`.
 2. Creates a run directory under `paths.log_dir`.
@@ -213,7 +213,7 @@ environment:
     set_group: true
 
 paths:
-  remote_launcher_dir: /remote/work/NewRunner
+  remote_launcher_dir: /remote/work/SlurmClusterRunner
   default_project_dir: /remote/work/MyProject
   data_dir: /remote/data
   log_dir: /remote/logs/MyProject
@@ -253,7 +253,7 @@ Required `resources` fields:
 
 Required `paths` fields:
 
-- `remote_launcher_dir`: where NewRunner syncs itself on the cluster.
+- `remote_launcher_dir`: where SlurmClusterRunner syncs itself on the cluster.
 - `default_project_dir`: default remote project checkout/path.
 - `data_dir`: cluster data path for documentation and future use.
 - `log_dir`: root directory for run folders.
@@ -277,7 +277,7 @@ Common keys such as `account`, `partition`, `qos`, `constraint`, `gres`, `nodes`
 
 ### Selecting defaults
 
-Exactly one YAML file may set `default: true` if you want `PARTITION` to be optional. If several files are default, NewRunner fails and asks for an explicit `PARTITION`.
+Exactly one YAML file may set `default: true` if you want `PARTITION` to be optional. If several files are default, SlurmClusterRunner fails and asks for an explicit `PARTITION`.
 
 ## Development
 
