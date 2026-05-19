@@ -12,7 +12,7 @@ from newrunner.models import PartitionConfig
 from newrunner.paths import RunPathPlan
 from newrunner.resources import ResourceRequest
 from newrunner.sweep import SweepJob
-from newrunner.time import TimeRequest
+from newrunner.time import TimeRequest, parse_wall_time
 
 
 @dataclass(frozen=True)
@@ -58,7 +58,7 @@ def _slurm_header(ctx: SbatchContext) -> list[str]:
         "ntasks-per-node": r.ntasks_per_node,
         "cpus-per-task": r.cpus_per_task,
         "time": ctx.time.wall_time,
-        "time-min": s.min_time if ctx.time.use_min_time and s.min_time else None,
+        "time-min": _effective_min_time(ctx),
         "hint": s.hint,
         "signal": s.signal,
         "output": s.output or ctx.paths.stdout_path,
@@ -73,6 +73,23 @@ def _slurm_header(ctx: SbatchContext) -> list[str]:
     for key, value in s.extra.items():
         header.append(f"#SBATCH --{key}={_slurm_value(value)}")
     return header
+
+
+def _effective_min_time(ctx: SbatchContext) -> str | None:
+    """Return a valid --time-min value, if enabled.
+
+    Slurm requires --time-min to be strictly lower than --time.  Some
+    partitions define a long default min_time (for normal jobs) but a much
+    shorter dev_time; in that case emitting --time-min would make dev jobs
+    invalid, so omit it.
+    """
+
+    min_time = ctx.partition.slurm.min_time
+    if not ctx.time.use_min_time or not min_time:
+        return None
+    if parse_wall_time(str(min_time)) >= ctx.time.seconds:
+        return None
+    return min_time
 
 
 def _environment_lines(ctx: SbatchContext) -> list[str]:

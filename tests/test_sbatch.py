@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from newrunner.args import ControlParams
 from newrunner.models import EnvironmentConfig, PartitionConfig, PathsConfig, ResourcesConfig, SlurmConfig
 from newrunner.paths import plan_run_paths
@@ -96,6 +98,29 @@ def test_batch_multi_gpu_and_wandb_overrides() -> None:
 def test_dev_uses_dev_qos() -> None:
     script = render_sbatch(context(ControlParams(dev=True)))
     assert "#SBATCH --qos=dev" in script
+
+
+def test_time_min_is_omitted_when_not_lower_than_job_time() -> None:
+    base = partition()
+    p = replace(
+        base,
+        slurm=replace(
+            base.slurm,
+            min_time="19:00:00",
+            use_min_time_default=True,
+            dev_time="01:00:00",
+        ),
+    )
+    job = parse_sweep(["lr=1e-3"]).jobs[0]
+    controls = ControlParams(dev=True)
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+
+    script = render_sbatch(ctx)
+
+    assert "#SBATCH --time=01:00:00" in script
+    assert "#SBATCH --time-min" not in script
 
 
 def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None:
