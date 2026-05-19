@@ -210,6 +210,8 @@ environment:
     mode: offline
     set_name: true
     set_group: true
+    name_key: logger.wandb.name
+    group_key: logger.wandb.group
 
 paths:
   remote_launcher_dir: /remote/work/SlurmClusterRunner

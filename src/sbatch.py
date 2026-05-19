@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import shlex
 from dataclasses import dataclass
 from pathlib import PurePosixPath
@@ -32,7 +33,7 @@ class SbatchContext:
 def render_sbatch(ctx: SbatchContext) -> str:
     """Render a complete sbatch script for one expanded job."""
 
-    lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -exo pipefail", ""]
+    lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -eo pipefail", ""]
     lines.extend(_environment_lines(ctx))
     lines.append("")
     lines.append("set -u")
@@ -105,6 +106,7 @@ def _environment_lines(ctx: SbatchContext) -> list[str]:
         lines.append(f"module load {shlex.quote(str(module))}")
     if env.activate_command:
         lines.append(str(env.activate_command))
+    lines.append("set -x")
     for key, value in env.exports.items():
         lines.append(f"export {key}={shlex.quote(str(value))}")
     lines.extend(env.pre_run)
@@ -140,10 +142,18 @@ def _injected_overrides(ctx: SbatchContext) -> list[str]:
     overrides.append(f"hydra.run.dir={ctx.paths.run_dir}")
     wandb = ctx.partition.environment.wandb
     if wandb.get("set_name"):
-        overrides.append(f"wandb.name={ctx.paths.display_name}")
+        name_key = wandb.get("name_key", "wandb.name")
+        overrides.append(f"{name_key}={_hydra_string(ctx.paths.display_name)}")
     if wandb.get("set_group"):
-        overrides.append(f"wandb.group={ctx.paths.run_root}")
+        group_key = wandb.get("group_key", "wandb.group")
+        overrides.append(f"{group_key}={_hydra_string(ctx.paths.run_root)}")
     return overrides
+
+
+def _hydra_string(value: str) -> str:
+    """Return a Hydra override value forced to string type."""
+
+    return json.dumps(value)
 
 
 def _slurm_value(value: Any) -> str:

@@ -157,6 +157,8 @@ environment:
     mode: offline        # offline, online, disabled, or unset
     set_name: true
     set_group: true
+    name_key: logger.wandb.name
+    group_key: logger.wandb.group
 
 features:
   job_chaining: false
@@ -354,9 +356,11 @@ Partition-level WandB policy should support at least:
 
 When enabled by the partition policy:
 
-- `logger.wandb.name` is set to `<time>_<NAME>_<var-param-values>`.
-- `logger.wandb.group` should be stable for a generated sweep, avoiding random
-  components that make re-submission difficult to correlate.
+- The configured `environment.wandb.name_key` (for example `logger.wandb.name`)
+  is set to `<time>_<NAME>_<var-param-values>`.
+- The configured `environment.wandb.group_key` (for example `logger.wandb.group`)
+  should be stable for a generated sweep, avoiding random components that make
+  re-submission difficult to correlate.
 
 Partitions may disable automatic WandB name/group injection entirely via
 `environment.wandb.set_name: false` and/or `environment.wandb.set_group: false`.

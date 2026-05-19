@@ -40,7 +40,12 @@ def partition() -> PartitionConfig:
             shell_init="/home/me/.bashrc",
             exports={"FOO": "bar baz"},
             pre_run=["echo ready"],
-            wandb={"set_name": True, "set_group": True},
+            wandb={
+                "set_name": True,
+                "set_group": True,
+                "name_key": "logger.wandb.name",
+                "group_key": "logger.wandb.group",
+            },
         ),
         modules={"purge": True, "load": ["cuda"]},
         default_overrides={"num_workers": "6"},
@@ -75,9 +80,12 @@ def test_environment_and_command_are_rendered() -> None:
     script = render_sbatch(context(ControlParams(gpu=1)))
 
     assert script.startswith("#!/bin/bash -l\n")
-    assert "set -exo pipefail" in script
-    assert script.index("set -exo pipefail") < script.index("env activate custom")
-    assert script.index("env activate custom") < script.index("set -u")
+    assert "set -eo pipefail" in script
+    assert "set -x" in script
+    assert "set -u" in script
+    assert script.index("set -eo pipefail") < script.index("env activate custom")
+    assert script.index("env activate custom") < script.index("set -x")
+    assert script.index("set -x") < script.index("export FOO='bar baz'")
     assert script.index("set -u") < script.index("cd /proj")
     assert "module purge" in script
     assert "module load cuda" in script
@@ -141,8 +149,8 @@ def test_batch_multi_gpu_and_wandb_overrides() -> None:
     assert "trainer.strategy=ddp" in script
     assert "trainer.devices=4" in script
     assert "trainer.num_nodes=1" in script
-    assert "wandb.name=0_lr=1e-3" in script
-    assert "wandb.group=/logs/train/ts-lr" in script
+    assert 'logger.wandb.name="0_lr=1e-3"' in script
+    assert 'logger.wandb.group="/logs/train/ts-lr"' in script
 
 
 def test_dev_uses_dev_qos() -> None:

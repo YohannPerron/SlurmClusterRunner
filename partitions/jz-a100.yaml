@@ -46,6 +46,8 @@ environment:
         mode: offline
         set_name: true
         set_group: true
+        name_key: logger.wandb.name
+        group_key: logger.wandb.group
 paths:
     remote_launcher_dir: work/Utils
     default_project_dir: /lustre/fswork/projects/rech/msf/uih12tb/AnySat
