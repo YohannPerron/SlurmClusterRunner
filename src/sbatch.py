@@ -32,9 +32,10 @@ class SbatchContext:
 def render_sbatch(ctx: SbatchContext) -> str:
     """Render a complete sbatch script for one expanded job."""
 
-    lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -euo pipefail", ""]
+    lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -exo pipefail", ""]
     lines.extend(_environment_lines(ctx))
     lines.append("")
+    lines.append("set -u")
     lines.append(f"cd {shlex.quote(ctx.project_path)}")
     lines.append(_command_line(ctx))
     lines.append("")

@@ -33,7 +33,7 @@ modules:
     load: []
 environment:
     shell_init: /lus/home/CT1/c1816178/yperron/.bashrc
-    activate_command: micromamba activate archeao
+    activate_command: micromamba activate SatNew
     pre_run:
         - numactl -s
     exports:

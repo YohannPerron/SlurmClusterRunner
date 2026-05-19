@@ -75,6 +75,10 @@ def test_environment_and_command_are_rendered() -> None:
     script = render_sbatch(context(ControlParams(gpu=1)))
 
     assert script.startswith("#!/bin/bash -l\n")
+    assert "set -exo pipefail" in script
+    assert script.index("set -exo pipefail") < script.index("env activate custom")
+    assert script.index("env activate custom") < script.index("set -u")
+    assert script.index("set -u") < script.index("cd /proj")
     assert "module purge" in script
     assert "module load cuda" in script
     assert "source /home/me/.bashrc" in script

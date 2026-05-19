@@ -34,7 +34,7 @@ modules:
   - git
 environment:
   shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
-  activate_command: micromamba activate archeao
+  activate_command: micromamba activate SatNew
   exports:
     SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
     PYTHONPATH: ./src/utils/
@@ -47,7 +47,7 @@ environment:
     set_group: true
 paths:
   remote_launcher_dir: work/Utils
-  default_project_dir: /lustre/fswork/projects/rech/ufh/ult23zz/AnySat
+  default_project_dir: /lustre/fswork/projects/rech/msf/uih12tb/AnySat
   data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
   log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/
 default_overrides:
