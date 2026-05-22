@@ -89,7 +89,7 @@ def _display_param_component(key: str, value: str) -> str:
     sanitized_value = sanitize_path_component(value)
     if _is_positional_axis_name(key):
         return sanitized_value
-    return f"{_display_param_name(key)}={sanitized_value}"
+    return f"{_display_param_name(key)}-{sanitized_value}"
 
 
 def _display_param_name(key: str) -> str:
@@ -107,6 +107,7 @@ def sanitize_path_component(value: object) -> str:
 
     text = str(value).strip()
     text = text.replace("/", "_")
-    text = re.sub(r"[^A-Za-z0-9._=+-]+", "_", text)
+    text = text.replace("=", "-")
+    text = re.sub(r"[^A-Za-z0-9._+-]+", "_", text)
     text = re.sub(r"_+", "_", text).strip("._")
     return text or "value"

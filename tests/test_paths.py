@@ -34,7 +34,7 @@ def test_variable_params_included_in_root_and_job_dir() -> None:
     )
 
     assert plan.run_root == "/logs/train/20260518-0907-my_run-lr"
-    assert plan.run_dir == "/logs/train/20260518-0907-my_run-lr/0_lr=1e-3"
+    assert plan.run_dir == "/logs/train/20260518-0907-my_run-lr/0_lr-1e-3"
     assert plan.script_path.endswith("/run.sbatch")
     assert plan.job_id_path.endswith("/job_id.txt")
 
@@ -44,7 +44,7 @@ def test_dotted_variable_param_names_use_last_element_in_log_paths() -> None:
     plan = plan_run_paths(partition(), "train.py", ControlParams(), job, index=0, timestamp="ts")
 
     assert plan.run_root == "/logs/train/ts-mlp_ratio"
-    assert plan.display_name == "0_mlp_ratio=2"
+    assert plan.display_name == "0_mlp_ratio-2"
 
 
 def test_positional_sweep_values_are_sanitized_but_not_named() -> None:
@@ -62,7 +62,7 @@ def test_control_variable_params_included() -> None:
     )
 
     assert plan.run_root == "/logs/train/ts-GPU"
-    assert plan.display_name == "2_GPU=4"
+    assert plan.display_name == "2_GPU-4"
 
 
 def test_dev_suffix_added_to_executable_log_folder() -> None:
@@ -74,3 +74,7 @@ def test_dev_suffix_added_to_executable_log_folder() -> None:
 
 def test_sanitize_empty_component() -> None:
     assert sanitize_path_component(" /// ") == "value"
+
+
+def test_sanitize_replaces_equals_with_dash() -> None:
+    assert sanitize_path_component("foo=bar") == "foo-bar"

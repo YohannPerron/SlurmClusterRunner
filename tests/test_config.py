@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.config import ConfigError, load_partitions, select_partition
+from src.config import ConfigError, default_partitions_dir, load_partitions, select_partition
 
 
 BASE = """
@@ -112,6 +112,14 @@ def test_gpu_type_emits_warning(tmp_path):
 
 
 def test_project_partitions_load():
-    partitions = load_partitions("partitions")
+    partitions = load_partitions(default_partitions_dir())
+
+    assert {partition.name for partition in partitions} >= {"jz-a100", "ada-mi300"}
+
+
+def test_default_partition_dir_is_not_current_working_directory(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+    partitions = load_partitions()
 
     assert {partition.name for partition in partitions} >= {"jz-a100", "ada-mi300"}

@@ -25,10 +25,21 @@ class ConfigError(ValueError):
 CONTROL_PARTITION_KEYS = ("PARTITION", "GPU_TYPE")
 
 
-def load_partitions(partitions_dir: Path | str = "partitions") -> list[PartitionConfig]:
+def default_partitions_dir() -> Path:
+    """Return the partition directory shipped with this runner checkout.
+
+    Console scripts may be invoked from any current working directory, so the
+    built-in partition files must be resolved relative to the installed runner
+    code instead of relative to ``Path.cwd()``.
+    """
+
+    return Path(__file__).resolve().parent.parent / "partitions"
+
+
+def load_partitions(partitions_dir: Path | str | None = None) -> list[PartitionConfig]:
     """Load and validate all ``*.yaml`` partition files from a directory."""
 
-    directory = Path(partitions_dir)
+    directory = default_partitions_dir() if partitions_dir is None else Path(partitions_dir)
     if not directory.exists():
         raise ConfigError(f"Partition directory does not exist: {directory}")
 
@@ -86,7 +97,7 @@ def select_partition(
 
 
 def load_selected_partition(
-    partitions_dir: Path | str = "partitions",
+    partitions_dir: Path | str | None = None,
     partition_name: str | None = None,
     gpu_type: str | None = None,
     environ: Mapping[str, str] | None = None,

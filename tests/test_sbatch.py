@@ -149,7 +149,7 @@ def test_batch_multi_gpu_and_wandb_overrides() -> None:
     assert "trainer.strategy=ddp" in script
     assert "trainer.devices=4" in script
     assert "trainer.num_nodes=1" in script
-    assert 'logger.wandb.name="0_lr=1e-3"' in script
+    assert 'logger.wandb.name="0_lr-1e-3"' in script
     assert 'logger.wandb.group="/logs/train/ts-lr"' in script
 
 
