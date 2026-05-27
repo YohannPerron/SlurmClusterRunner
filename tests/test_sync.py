@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.commands import CommandError, CommandResult
+import src.sync as sync_module
 from src.sync import sync_remote_launcher
 
 
@@ -48,6 +49,31 @@ def local_state_text(dirty: bool = False) -> str:
     assert result.updated is True
     assert state_writes
     return state_writes[-1][1] or ""
+
+
+def test_sync_uses_runner_checkout_when_no_local_cwd(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(sync_module, "__file__", str(tmp_path / "src" / "sync.py"))
+    expected_cwd = str(tmp_path)
+
+    class CwdRunner(FakeRunner):
+        def __init__(self) -> None:
+            super().__init__(cat_fails=True)
+            self.cwd_by_command: list[tuple[tuple[str, ...], str | None]] = []
+
+        def run(self, args, *, cwd=None, input=None, check=True):
+            self.cwd_by_command.append((tuple(args), cwd))
+            return super().run(args, cwd=cwd, input=input, check=check)
+
+    runner = CwdRunner()
+
+    sync_remote_launcher(runner=runner, remote_host="cluster", remote_launcher_dir="/launcher")
+
+    git_cwds = [cwd for command, cwd in runner.cwd_by_command if command[0] == "git"]
+    assert git_cwds
+    assert set(git_cwds) == {expected_cwd}
+    rsync_calls = [command for command, _ in runner.cwd_by_command if command[0] == "rsync"]
+    assert rsync_calls
+    assert rsync_calls[0][-2] == f"{expected_cwd}/"
 
 
 def test_sync_remote_launcher_matching_state_does_nothing() -> None:

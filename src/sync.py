@@ -51,12 +51,17 @@ def get_local_commit(runner: CommandRunner, *, cwd: str | None = None) -> str:
 
 
 def get_local_git_state(runner: CommandRunner, *, cwd: str | None = None) -> LocalGitState:
-    """Return local git state and a fingerprint of dirty contents."""
+    """Return local runner git state and a fingerprint of dirty contents.
 
-    commit = runner.run(["git", "rev-parse", "HEAD"], cwd=cwd).stdout.strip()
-    status = runner.run(["git", "status", "--porcelain"], cwd=cwd).stdout
+    When ``cwd`` is not provided, git is executed from the runner checkout
+    rather than from the caller's current working directory.
+    """
+
+    git_cwd = _local_runner_dir(cwd)
+    commit = runner.run(["git", "rev-parse", "HEAD"], cwd=git_cwd).stdout.strip()
+    status = runner.run(["git", "status", "--porcelain"], cwd=git_cwd).stdout
     dirty = bool(status.strip())
-    fingerprint = _fingerprint_worktree(runner, commit=commit, status=status, cwd=cwd)
+    fingerprint = _fingerprint_worktree(runner, commit=commit, status=status, cwd=git_cwd)
     return LocalGitState(commit=commit, dirty=dirty, fingerprint=fingerprint)
 
 
@@ -74,6 +79,7 @@ def sync_remote_launcher(
     does not match the local commit/dirty fingerprint.
     """
 
+    local_cwd = _local_runner_dir(local_cwd)
     local = get_local_git_state(runner, cwd=local_cwd)
     if local.dirty:
         print(
@@ -98,6 +104,14 @@ def sync_remote_launcher(
         updated=True,
         method="rsync",
     )
+
+
+def _local_runner_dir(cwd: str | None = None) -> str:
+    """Return the checkout path whose git state should be synchronized."""
+
+    if cwd is not None:
+        return cwd
+    return str(Path(__file__).resolve().parents[1])
 
 
 def _fingerprint_worktree(
@@ -163,7 +177,7 @@ def _rsync_launcher(
 ) -> None:
     """Copy the local launcher working tree to the remote launcher directory."""
 
-    source = Path(local_cwd or ".").resolve()
+    source = Path(_local_runner_dir(local_cwd)).resolve()
     runner.run(["ssh", remote_host, f"mkdir -p {shlex.quote(remote_launcher_dir)}"])
     runner.run(
         [
