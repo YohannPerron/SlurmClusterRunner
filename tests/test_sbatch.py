@@ -153,6 +153,21 @@ def test_batch_multi_gpu_and_wandb_overrides() -> None:
     assert 'logger.wandb.group="/logs/train/ts-lr"' in script
 
 
+def test_wandb_name_and_group_replace_equals_signs() -> None:
+    ctx = context(ControlParams(gpu=1))
+    paths = replace(
+        ctx.paths,
+        display_name="0_model_loss=MAEMLP-Contra_meta_key_depth=0",
+        run_root="/logs/train/ts/model_loss=MAEMLP-Contra",
+    )
+    script = render_sbatch(replace(ctx, paths=paths))
+
+    assert 'logger.wandb.name="0_model_loss-MAEMLP-Contra_meta_key_depth-0"' in script
+    assert 'logger.wandb.group="/logs/train/ts/model_loss-MAEMLP-Contra"' in script
+    assert "logger.wandb.name=\"0_model_loss=MAEMLP" not in script
+    assert "logger.wandb.group=\"/logs/train/ts/model_loss=MAEMLP" not in script
+
+
 def test_dev_uses_dev_qos() -> None:
     script = render_sbatch(context(ControlParams(dev=True)))
     assert "#SBATCH --qos=dev" in script
