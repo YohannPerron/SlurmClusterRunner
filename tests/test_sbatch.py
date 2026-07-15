@@ -83,10 +83,11 @@ def test_environment_and_command_are_rendered() -> None:
     assert "set -eo pipefail" in script
     assert "set -x" in script
     assert "set -u" in script
-    assert script.index("set -eo pipefail") < script.index("env activate custom")
+    assert script.index("set -eo pipefail") < script.index("cd /proj")
+    assert script.index("cd /proj") < script.index("env activate custom")
     assert script.index("env activate custom") < script.index("set -x")
     assert script.index("set -x") < script.index("export FOO='bar baz'")
-    assert script.index("set -u") < script.index("cd /proj")
+    assert script.index("set -x") < script.index("set -u")
     assert "module purge" in script
     assert "module load cuda" in script
     assert "source /home/me/.bashrc" in script
@@ -170,6 +171,25 @@ def test_cpu_only_partition_omits_gpu_directives() -> None:
     assert "trainer=cpu" in script
     assert "trainer.devices=" not in script
     assert "trainer.num_nodes=1" in script
+
+
+def test_command_prefix_is_raw_shell_prefix() -> None:
+    base = partition()
+    p = replace(
+        base,
+        launcher={
+            "command_prefix": 'uv run python cache.py run --source "${DISFOR_SOURCE}" -- uv run',
+        },
+    )
+    controls = ControlParams(gpu=1)
+    job = parse_sweep(["lr=1e-3"]).jobs[0]
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+
+    script = render_sbatch(ctx)
+
+    assert 'uv run python cache.py run --source "${DISFOR_SOURCE}" -- uv run python -u train.py' in script
 
 
 def test_batch_multi_gpu_and_wandb_overrides() -> None:

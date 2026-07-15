@@ -34,10 +34,10 @@ def render_sbatch(ctx: SbatchContext) -> str:
     """Render a complete sbatch script for one expanded job."""
 
     lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -eo pipefail", ""]
+    lines.append(f"cd {shlex.quote(ctx.project_path)}")
     lines.extend(_environment_lines(ctx))
     lines.append("")
     lines.append("set -u")
-    lines.append(f"cd {shlex.quote(ctx.project_path)}")
     lines.append(_command_line(ctx))
     lines.append("")
     return "\n".join(lines)
@@ -115,15 +115,16 @@ def _environment_lines(ctx: SbatchContext) -> list[str]:
 
 def _command_line(ctx: SbatchContext) -> str:
     command: list[str] = []
-    prefix = ctx.partition.launcher.get("command_prefix")
-    if prefix:
-        command.extend(shlex.split(str(prefix)))
     command.extend(["python", "-u", ctx.executable])
     command.extend(ctx.sweep_job.positional_args)
     overrides = [*ctx.sweep_job.hydra_overrides]
     overrides.extend(_injected_overrides(ctx))
     command.extend(overrides)
-    return " ".join(shlex.quote(str(part)) for part in command)
+    rendered_command = " ".join(shlex.quote(str(part)) for part in command)
+    prefix = ctx.partition.launcher.get("command_prefix")
+    if prefix:
+        return f"{prefix} {rendered_command}"
+    return rendered_command
 
 
 def _injected_overrides(ctx: SbatchContext) -> list[str]:
