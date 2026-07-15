@@ -221,6 +221,17 @@ runner version that initiated the command**.
 
 ---
 
+## SSH Connection Multiplexing
+
+Before creating a private SSH master for a remote host, the runner must use
+`ssh -O check <host>` to check for a master resolved through the user's normal
+SSH configuration. If one exists, `ssh` and `rsync` commands must reuse it
+without overriding its `ControlPath`, and the runner must not close it. If no
+configured master exists, the runner may create a private multiplexing socket
+and must close only that private connection when the invocation exits.
+
+---
+
 ## Multi-GPU / Multi-Node
 
 When `GPU > 1`:

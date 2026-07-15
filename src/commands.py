@@ -54,14 +54,18 @@ class CommandRunner(Protocol):
 class SubprocessRunner:
     """Command runner backed by :mod:`subprocess`.
 
-    SSH calls are multiplexed through a persistent master connection per host.
-    This avoids paying the SSH login cost for every mkdir/cat/sbatch command.
+    SSH calls reuse a master connection from the user's SSH configuration when
+    one is already running. Otherwise, the runner creates a private persistent
+    master per host to avoid paying the SSH login cost for every command.
     """
 
     use_ssh_master: bool = True
     verbose: bool = False
-    _control_dir: Path = field(default_factory=lambda: Path(tempfile.mkdtemp(prefix="runner-ssh-")))
+    _control_dir: Path = field(
+        default_factory=lambda: Path(tempfile.mkdtemp(prefix="runner-ssh-"))
+    )
     _masters: set[str] = field(default_factory=set)
+    _external_masters: set[str] = field(default_factory=set)
 
     def __post_init__(self) -> None:
         if self.use_ssh_master:
@@ -80,7 +84,11 @@ class SubprocessRunner:
         cwd_text = f" cwd={cwd}" if cwd else ""
         input_text = " input=<provided>" if input is not None else ""
         if self.verbose:
-            print(f"[runner] START {command}{cwd_text}{input_text}", file=sys.stderr, flush=True)
+            print(
+                f"[runner] START {command}{cwd_text}{input_text}",
+                file=sys.stderr,
+                flush=True,
+            )
         started = time.monotonic()
         stream_output = self.verbose and bool(args) and args[0] == "rsync"
         completed = subprocess.run(
@@ -127,17 +135,46 @@ class SubprocessRunner:
         if prepared[0] == "ssh" and len(prepared) >= 2:
             host = prepared[1]
             self._ensure_ssh_master(host)
+            if host in self._external_masters:
+                return prepared
             return ["ssh", *self._ssh_options(host), *prepared[1:]]
         if prepared[0] == "rsync":
-            host = _rsync_remote_host(prepared)
-            if host:
-                self._ensure_ssh_master(host)
-                return ["rsync", "-e", f"ssh {' '.join(self._ssh_options(host))}", *prepared[1:]]
+            rsync_host = _rsync_remote_host(prepared)
+            if rsync_host:
+                self._ensure_ssh_master(rsync_host)
+                if rsync_host in self._external_masters:
+                    return prepared
+                return [
+                    "rsync",
+                    "-e",
+                    f"ssh {' '.join(self._ssh_options(rsync_host))}",
+                    *prepared[1:],
+                ]
         return prepared
 
     def _ensure_ssh_master(self, host: str) -> None:
-        if host in self._masters:
+        if host in self._masters or host in self._external_masters:
             return
+        check_command = ["ssh", "-O", "check", host]
+        if self.verbose:
+            print(
+                f"[runner] START ssh master check {host}", file=sys.stderr, flush=True
+            )
+        started = time.monotonic()
+        check = subprocess.run(
+            check_command, text=True, capture_output=True, check=False
+        )
+        elapsed = time.monotonic() - started
+        if self.verbose:
+            print(
+                f"[runner] DONE ssh master check {host} rc={check.returncode} elapsed={elapsed:.2f}s",
+                file=sys.stderr,
+                flush=True,
+            )
+        if check.returncode == 0:
+            self._external_masters.add(host)
+            return
+
         self._control_dir.mkdir(parents=True, exist_ok=True)
         command = [
             "ssh",
@@ -180,7 +217,9 @@ class SubprocessRunner:
         ]
 
     def _control_path(self, host: str) -> str:
-        safe_host = "".join(char if char.isalnum() or char in "._-" else "_" for char in host)
+        safe_host = "".join(
+            char if char.isalnum() or char in "._-" else "_" for char in host
+        )
         return str(self._control_dir / f"cm-{safe_host}")
 
 

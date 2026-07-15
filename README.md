@@ -54,6 +54,12 @@ uv run runner <executable> [ARG_OR_KEY=VALUE ...]
 
 Add `-v`/`--verbose` to print external `ssh`, `rsync`, `git`, and `sbatch` commands with timing information while debugging slow submissions.
 
+The runner checks for an existing SSH multiplexing master with `ssh -O check`
+before connecting to each host. When a master configured through
+`~/.ssh/config` is running, both `ssh` and `rsync` reuse it and the runner leaves
+it running. Otherwise, the runner creates a private master connection for the
+invocation and closes only that private connection when it exits.
+
 - `<executable>` is the Python script to run from inside the selected partition's configured `paths.default_project_dir`.
 - Remaining tokens are either forwarded positional arguments or Hydra-style `key=value` overrides.
 
