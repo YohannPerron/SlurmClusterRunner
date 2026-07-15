@@ -142,6 +142,36 @@ def test_null_activate_command_skips_activation() -> None:
     assert "activate custom" not in script
 
 
+def test_cpu_only_partition_omits_gpu_directives() -> None:
+    base = partition()
+    p = replace(
+        base,
+        gpu_type="CPU",
+        slurm=replace(base.slurm, gres=None, constraint=None),
+        resources=ResourcesConfig(
+            gpu_per_node=0,
+            cpu_per_gpu=1,
+            cpu_per_node=40,
+            task_mode="per_node",
+        ),
+        default_overrides={"trainer": "cpu"},
+    )
+    controls = ControlParams(gpu=1)
+    job = parse_sweep(["lr=1e-3"]).jobs[0]
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+
+    script = render_sbatch(ctx)
+
+    assert "#SBATCH --gres" not in script
+    assert "#SBATCH --gpus-per-node" not in script
+    assert "#SBATCH --cpus-per-task=40" in script
+    assert "trainer=cpu" in script
+    assert "trainer.devices=" not in script
+    assert "trainer.num_nodes=1" in script
+
+
 def test_batch_multi_gpu_and_wandb_overrides() -> None:
     script = render_sbatch(context(ControlParams(gpu=4, batch=128), ["lr=1e-3,1e-4"]))
 

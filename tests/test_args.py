@@ -41,6 +41,7 @@ def test_control_params_removed_from_forwarded_args():
         [
             "NAME=exp",
             "GPU=4",
+            "CPU=12",
             "PARTITION=jz-a100",
             "BATCH=128",
             "TIME=02:00:00",
@@ -54,6 +55,7 @@ def test_control_params_removed_from_forwarded_args():
 
     assert controls.name == "exp"
     assert controls.gpu == 4
+    assert controls.cpu == 12
     assert controls.partition == "jz-a100"
     assert controls.batch == 128
     assert controls.time == "02:00:00"
@@ -93,7 +95,10 @@ def test_compat_control_parser_rejects_sweep():
         split_control_params(["GPU=2,4"])
 
 
-@pytest.mark.parametrize("token, match", [("GPU=nope", "GPU"), ("BATCH=0", "BATCH"), ("DEV=maybe", "DEV")])
+@pytest.mark.parametrize(
+    "token, match",
+    [("GPU=nope", "GPU"), ("CPU=0", "CPU"), ("BATCH=0", "BATCH"), ("DEV=maybe", "DEV")],
+)
 def test_invalid_types_fail_clearly(token, match):
     with pytest.raises(ArgumentError, match=match):
         split_control_params([token])
@@ -148,3 +153,38 @@ environment:
         validate_control_params(ControlParams(), partition)
 
     validate_control_params(ControlParams(tag="baseline"), partition)
+
+
+def test_cpu_control_rejected_for_gpu_partition(tmp_path):
+    path = tmp_path / "p1.yaml"
+    path.write_text(
+        """\
+name: p1
+gpu_type: A100
+remote_host: host
+default: true
+slurm:
+  account: acc
+  partition: part
+  qos: qos
+  dev_qos: dev
+  max_time_hours: 20
+  require_tag: false
+resources:
+  gpu_per_node: 8
+  cpu_per_gpu: 10
+  task_mode: per_gpu
+paths:
+  remote_launcher_dir: /remote/launcher
+  default_project_dir: /remote/project
+  data_dir: /remote/data
+  log_dir: /remote/logs
+environment:
+  exports: {}
+""",
+        encoding="utf-8",
+    )
+    partition = load_partitions(tmp_path)[0]
+
+    with pytest.raises(ArgumentError, match="CPU-only"):
+        validate_control_params(ControlParams(cpu=12), partition)

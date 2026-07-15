@@ -56,7 +56,7 @@ def _slurm_header(ctx: SbatchContext) -> list[str]:
         "constraint": s.constraint,
         "gres": f"{s.gres}:{r.gpus_per_node}" if s.gres else None,
         "nodes": r.nodes,
-        "gpus-per-node": r.gpus_per_node,
+        "gpus-per-node": r.gpus_per_node if r.gpus_per_node else None,
         "ntasks-per-node": r.ntasks_per_node,
         "cpus-per-task": r.cpus_per_task,
         "time": ctx.time.wall_time,
@@ -137,7 +137,8 @@ def _injected_overrides(ctx: SbatchContext) -> list[str]:
     if ctx.resources.total_gpus > 1:
         for key, value in ctx.partition.resources.multi_gpu_overrides.items():
             overrides.append(f"{key}={value}")
-    overrides.append(f"trainer.devices={ctx.resources.gpus_per_node}")
+    if ctx.resources.total_gpus > 0:
+        overrides.append(f"trainer.devices={ctx.resources.gpus_per_node}")
     overrides.append(f"trainer.num_nodes={ctx.resources.nodes}")
     overrides.append(f"hydra.run.dir={ctx.paths.run_dir}")
     wandb = ctx.partition.environment.wandb

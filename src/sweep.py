@@ -9,7 +9,7 @@ from typing import Iterable
 from src.args import CONTROL_PARAMS
 
 
-CONTROL_SWEEP_ALLOWED = {"GPU", "PARTITION", "BATCH"}
+CONTROL_SWEEP_ALLOWED = {"GPU", "CPU", "PARTITION", "BATCH"}
 
 
 class SweepConfirmationRequired(ValueError):
@@ -112,7 +112,7 @@ def split_bracket_aware(value: str) -> list[str]:
 def parse_sweep(tokens: Iterable[str], *, confirm_control_sweeps: bool = False) -> SweepPlan:
     """Classify tokens and expand them as a Cartesian product.
 
-    ``GPU``, ``PARTITION`` and ``BATCH`` can be swept without confirmation.
+    ``GPU``, ``CPU``, ``PARTITION`` and ``BATCH`` can be swept without confirmation.
     Sweeping any other launcher control parameter requires confirmation because
     it can silently create surprising job variants.
     """

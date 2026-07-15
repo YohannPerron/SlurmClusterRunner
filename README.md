@@ -85,6 +85,7 @@ Control parameters are consumed by SlurmClusterRunner and are not forwarded dire
 | `NAME` | none | Human-readable run label used in SLURM job names and log directory names. |
 | `PARTITION` | configured default | Selects a YAML file from `partitions/` by its `name`. |
 | `GPU` | `1` | Total GPUs requested for one job. Multi-node requests must be divisible by `resources.gpu_per_node`. |
+| `CPU` | partition default | CPU cores requested for a CPU-only job. Using it with a GPU partition is an error. |
 | `BATCH` | none | Total batch size. SlurmClusterRunner injects `data.batch_size=BATCH/GPU`; `BATCH` must be divisible by `GPU`. |
 | `TIME` | partition default/max | Wall time as `HH:MM:SS` or integer hours. |
 | `MINTIME` | partition default | Boolean controlling whether `#SBATCH --time-min` is emitted when configured. |
@@ -95,7 +96,7 @@ Control parameters are consumed by SlurmClusterRunner and are not forwarded dire
 
 Boolean values accept forms like `true/false`, `yes/no`, `1/0`, and `on/off`.
 
-Sweeping `GPU`, `PARTITION`, and `BATCH` is allowed by default. Sweeping other control parameters requires:
+Sweeping `GPU`, `CPU`, `PARTITION`, and `BATCH` is allowed by default. Sweeping other control parameters requires:
 
 ```bash
 uv run runner --allow-control-sweeps <executable> NAME=a,b ...

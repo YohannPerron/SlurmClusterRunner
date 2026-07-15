@@ -64,12 +64,17 @@ def test_variable_params_identified_for_output_names():
 
 
 def test_allowed_control_parameters_are_swept_before_control_detection():
-    plan = parse_sweep(["GPU=2,4", "PARTITION=a,b", "BATCH=64,128", "lr=1e-3"])
+    plan = parse_sweep(["GPU=2,4", "CPU=8,16", "PARTITION=a,b", "BATCH=64,128", "lr=1e-3"])
 
-    assert len(plan.jobs) == 8
-    assert plan.jobs[0].tokens == ["GPU=2", "PARTITION=a", "BATCH=64", "lr=1e-3"]
-    assert plan.jobs[-1].tokens == ["GPU=4", "PARTITION=b", "BATCH=128", "lr=1e-3"]
-    assert plan.jobs[-1].variable_params == {"GPU": "4", "PARTITION": "b", "BATCH": "128"}
+    assert len(plan.jobs) == 16
+    assert plan.jobs[0].tokens == ["GPU=2", "CPU=8", "PARTITION=a", "BATCH=64", "lr=1e-3"]
+    assert plan.jobs[-1].tokens == ["GPU=4", "CPU=16", "PARTITION=b", "BATCH=128", "lr=1e-3"]
+    assert plan.jobs[-1].variable_params == {
+        "GPU": "4",
+        "CPU": "16",
+        "PARTITION": "b",
+        "BATCH": "128",
+    }
 
 
 def test_other_control_parameter_sweeps_require_confirmation():

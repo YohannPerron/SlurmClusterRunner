@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> None:
             message = (
                 "Sweeping control parameter(s) "
                 f"{names} requires --allow-control-sweeps. "
-                "GPU, PARTITION, and BATCH may be swept without this flag."
+                "GPU, CPU, PARTITION, and BATCH may be swept without this flag."
             )
         else:
             message = str(exc)
@@ -86,7 +86,7 @@ def orchestrate(argv: list[str], *, runner: CommandRunner) -> list[JobSummary]:
             synced.add(sync_key)
 
         clean_job = _clean_sweep_job(sweep_job, forwarded)
-        resources = calculate_resources(controls.gpu, partition)
+        resources = calculate_resources(controls.gpu, partition, controls.cpu)
         time_request = resolve_time(controls, partition)
         control_vars = {
             key: value for key, value in sweep_job.variable_params.items() if key in CONTROL_PARAMS

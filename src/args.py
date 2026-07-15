@@ -13,6 +13,7 @@ from src.models import PartitionConfig
 CONTROL_PARAMS = {
     "NAME",
     "GPU",
+    "CPU",
     "PARTITION",
     "GPU_TYPE",
     "BATCH",
@@ -43,6 +44,7 @@ class ControlParams:
 
     name: str | None = None
     gpu: int = 1
+    cpu: int | None = None
     partition: str | None = None
     gpu_type: str | None = None
     batch: int | None = None
@@ -76,7 +78,7 @@ def parse_cli(argv: Iterable[str]) -> RawCliArgs:
     parser.add_argument(
         "--allow-control-sweeps",
         action="store_true",
-        help="Allow sweeping control parameters other than GPU, PARTITION, and BATCH.",
+        help="Allow sweeping control parameters other than GPU, CPU, PARTITION, and BATCH.",
     )
     parser.add_argument(
         "-v",
@@ -149,6 +151,7 @@ def _build_controls(values: dict[str, str]) -> ControlParams:
     controls = ControlParams(
         name=_optional(values.get("NAME")),
         gpu=_int(values.get("GPU"), "GPU", default=1),
+        cpu=_optional_int(values.get("CPU"), "CPU"),
         partition=_optional(values.get("PARTITION")),
         gpu_type=_optional(values.get("GPU_TYPE")),
         batch=_optional_int(values.get("BATCH"), "BATCH"),
@@ -167,6 +170,8 @@ def validate_control_params(controls: ControlParams, partition: PartitionConfig)
 
     if partition.slurm.require_tag and not controls.tag:
         raise ArgumentError(f"TAG is required for partition '{partition.name}'")
+    if controls.cpu is not None and partition.resources.gpu_per_node > 0:
+        raise ArgumentError("CPU can only be used with a CPU-only partition")
 
 
 def _split_bracket_aware(value: str) -> list[str]:

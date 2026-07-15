@@ -185,6 +185,7 @@ def _resources(data: Mapping[str, Any], source_path: str) -> ResourcesConfig:
         gpu_per_node=int(data["gpu_per_node"]),
         cpu_per_gpu=int(data["cpu_per_gpu"]),
         task_mode=task_mode,
+        cpu_per_node=int(data["cpu_per_node"]) if data.get("cpu_per_node") is not None else None,
         require_full_node_gpu=bool(data.get("require_full_node_gpu", False)),
         exclusive=bool(data.get("exclusive", False)),
         multi_gpu_overrides=dict(data.get("multi_gpu_overrides") or {}),

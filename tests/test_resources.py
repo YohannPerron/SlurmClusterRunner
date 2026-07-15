@@ -84,3 +84,36 @@ def test_require_full_node_gpu(tmp_path):
     with pytest.raises(ResourceError, match="full-node"):
         calculate_resources(1, part)
     assert calculate_resources(4, part).gpus_per_node == 4
+
+
+def test_cpu_only_partition_uses_cpu_per_node(tmp_path):
+    part = partition(
+        tmp_path,
+        "resources:\n  gpu_per_node: 0\n  cpu_per_gpu: 1\n  cpu_per_node: 40\n  task_mode: per_node",
+    )
+
+    req = calculate_resources(1, part)
+
+    assert req.nodes == 1
+    assert req.gpus_per_node == 0
+    assert req.total_gpus == 0
+    assert req.ntasks_per_node == 1
+    assert req.cpus_per_task == 40
+    with pytest.raises(ResourceError, match="CPU-only"):
+        calculate_resources(2, part)
+
+
+def test_cpu_control_overrides_cpu_only_partition_default(tmp_path):
+    part = partition(
+        tmp_path,
+        "resources:\n  gpu_per_node: 0\n  cpu_per_gpu: 1\n  cpu_per_node: 40\n  task_mode: per_node",
+    )
+
+    req = calculate_resources(1, part, total_cpus=12)
+
+    assert req.cpus_per_task == 12
+
+
+def test_cpu_control_rejected_for_gpu_partition(tmp_path):
+    with pytest.raises(ResourceError, match="CPU-only"):
+        calculate_resources(1, partition(tmp_path), total_cpus=12)

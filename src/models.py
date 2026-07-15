@@ -35,6 +35,7 @@ class ResourcesConfig:
     gpu_per_node: int
     cpu_per_gpu: int
     task_mode: TaskMode
+    cpu_per_node: int | None = None
     require_full_node_gpu: bool = False
     exclusive: bool = False
     multi_gpu_overrides: dict[str, Any] = field(default_factory=dict)

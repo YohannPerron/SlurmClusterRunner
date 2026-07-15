@@ -42,6 +42,7 @@ training script unless explicitly stated.
 |-------------|---------|---------------------|-------------|
 | `NAME`      | str     | —                   | Job name suffix and output directory label |
 | `GPU`       | int     | `1`                 | Total number of GPUs across all nodes |
+| `CPU`       | int     | partition default   | CPU cores for a CPU-only job; invalid when GPUs are used |
 | `PARTITION` | str     | configured default  | Runtime partition selection. Replaces the old `GPU_TYPE` parameter |
 | `BATCH`     | int     | —                   | Total batch size; divided by `GPU` to get per-GPU size, sets `data.batch_size` |
 | `TIME`      | str/int | partition max       | Requested wall time (`HH:MM:SS` or integer hours) |

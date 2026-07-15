@@ -22,17 +22,37 @@ class ResourceRequest:
     total_gpus: int
 
 
-def calculate_resources(total_gpus: int, partition: PartitionConfig) -> ResourceRequest:
-    """Compute node/task layout for ``total_gpus`` on ``partition``."""
+def calculate_resources(
+    total_gpus: int,
+    partition: PartitionConfig,
+    total_cpus: int | None = None,
+) -> ResourceRequest:
+    """Compute node/task layout for the requested resources on ``partition``."""
 
     if total_gpus < 1:
         raise ResourceError("GPU must be >= 1")
 
     cfg = partition.resources
-    if cfg.gpu_per_node < 1:
-        raise ResourceError("partition resources.gpu_per_node must be >= 1")
     if cfg.cpu_per_gpu < 1:
         raise ResourceError("partition resources.cpu_per_gpu must be >= 1")
+    if cfg.gpu_per_node < 0:
+        raise ResourceError("partition resources.gpu_per_node must be >= 0")
+
+    if cfg.gpu_per_node == 0:
+        if total_gpus != 1:
+            raise ResourceError(f"partition '{partition.name}' is CPU-only; use GPU=1")
+        if total_cpus is not None and total_cpus < 1:
+            raise ResourceError("CPU must be >= 1")
+        return ResourceRequest(
+            nodes=1,
+            gpus_per_node=0,
+            ntasks_per_node=1,
+            cpus_per_task=total_cpus or cfg.cpu_per_node or cfg.cpu_per_gpu,
+            total_gpus=0,
+        )
+
+    if total_cpus is not None:
+        raise ResourceError("CPU can only be used with a CPU-only partition")
 
     if total_gpus <= cfg.gpu_per_node:
         nodes = 1
