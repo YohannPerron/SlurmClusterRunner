@@ -199,22 +199,31 @@ def test_batch_multi_gpu_and_wandb_overrides() -> None:
     assert "trainer.strategy=ddp" in script
     assert "trainer.devices=4" in script
     assert "trainer.num_nodes=1" in script
-    assert 'logger.wandb.name="0_lr-1e-3"' in script
+    assert 'logger.wandb.name="ts_lr-1e-3"' in script
     assert 'logger.wandb.group="/logs/train/ts-lr"' in script
+
+
+def test_wandb_name_includes_name_meta_parameter() -> None:
+    script = render_sbatch(
+        context(ControlParams(name="baseline"), ["lr=1e-3,1e-4"])
+    )
+
+    assert 'logger.wandb.name="ts_baseline_lr-1e-3"' in script
+    assert "/ts-baseline-lr/0_lr-1e-3" in script
 
 
 def test_wandb_name_and_group_replace_equals_signs() -> None:
     ctx = context(ControlParams(gpu=1))
     paths = replace(
         ctx.paths,
-        display_name="0_model_loss=MAEMLP-Contra_meta_key_depth=0",
+        wandb_name="ts_model_loss=MAEMLP-Contra_meta_key_depth=0",
         run_root="/logs/train/ts/model_loss=MAEMLP-Contra",
     )
     script = render_sbatch(replace(ctx, paths=paths))
 
-    assert 'logger.wandb.name="0_model_loss-MAEMLP-Contra_meta_key_depth-0"' in script
+    assert 'logger.wandb.name="ts_model_loss-MAEMLP-Contra_meta_key_depth-0"' in script
     assert 'logger.wandb.group="/logs/train/ts/model_loss-MAEMLP-Contra"' in script
-    assert "logger.wandb.name=\"0_model_loss=MAEMLP" not in script
+    assert "logger.wandb.name=\"ts_model_loss=MAEMLP" not in script
     assert "logger.wandb.group=\"/logs/train/ts/model_loss=MAEMLP" not in script
 
 

@@ -35,6 +35,8 @@ def test_variable_params_included_in_root_and_job_dir() -> None:
 
     assert plan.run_root == "/logs/train/20260518-0907-my_run-lr"
     assert plan.run_dir == "/logs/train/20260518-0907-my_run-lr/0_lr-1e-3"
+    assert plan.display_name == "0_lr-1e-3"
+    assert plan.wandb_name == "20260518-0907_my_run_lr-1e-3"
     assert plan.script_path.endswith("/run.sbatch")
     assert plan.job_id_path.endswith("/job_id.txt")
 

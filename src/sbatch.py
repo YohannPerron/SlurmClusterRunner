@@ -145,7 +145,7 @@ def _injected_overrides(ctx: SbatchContext) -> list[str]:
     wandb = ctx.partition.environment.wandb
     if wandb.get("set_name"):
         name_key = wandb.get("name_key", "wandb.name")
-        overrides.append(f"{name_key}={_hydra_string(_wandb_label(ctx.paths.display_name))}")
+        overrides.append(f"{name_key}={_hydra_string(_wandb_label(ctx.paths.wandb_name))}")
     if wandb.get("set_group"):
         group_key = wandb.get("group_key", "wandb.group")
         overrides.append(f"{group_key}={_hydra_string(_wandb_label(ctx.paths.run_root))}")
