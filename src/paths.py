@@ -24,6 +24,7 @@ class RunPathPlan:
     stderr_path: str
     job_id_path: str
     display_name: str
+    wandb_name: str
 
 
 def invocation_stamp(now: datetime | None = None) -> str:
@@ -72,6 +73,13 @@ def plan_run_paths(
     if value_suffix:
         display_name += f"_{value_suffix}"
 
+    wandb_name_parts = [sanitize_path_component(timestamp)]
+    if name:
+        wandb_name_parts.append(name)
+    if value_suffix:
+        wandb_name_parts.append(value_suffix)
+    wandb_name = "_".join(wandb_name_parts)
+
     run_root = str(PurePosixPath(partition.paths.log_dir) / task_name / run_root_name)
     run_dir = str(PurePosixPath(run_root) / sanitize_path_component(display_name))
     return RunPathPlan(
@@ -82,6 +90,7 @@ def plan_run_paths(
         stderr_path=str(PurePosixPath(run_dir) / "slurm-%j.err"),
         job_id_path=str(PurePosixPath(run_dir) / "job_id.txt"),
         display_name=display_name,
+        wandb_name=wandb_name,
     )
 
 
