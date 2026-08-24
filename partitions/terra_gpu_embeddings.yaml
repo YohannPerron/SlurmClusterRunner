@@ -1,17 +1,17 @@
-name: terra_gpu_nc
+name: terra_gpu_embeddings
 gpu_type: GPU
 remote_host: Terra
 default: false
 slurm:
   account: pn52pi-c
-  job_name_prefix: TERRA-GPU-NC
+  job_name_prefix: TERRA-GPU-EMBEDDINGS
   gres: gpu
   partition: hpda2_compute_gpu
   constraint: null
   qos: null
   dev_qos: null
   max_time_hours: 240
-  default_time: "24:00:00"
+  default_time: "48:00:00"
   dev_time: "2:00:00"
   min_time: null
   use_min_time_default: false
@@ -35,9 +35,10 @@ modules:
   load:
     - uv
     - gcc
+    - git/2.49.0
 environment:
   shell_init: null
-  activate_command: uv sync
+  activate_command: uv sync --group embeddings
   pre_run:
     - 'echo "Running on host: $(hostname)"'
   exports: {}
@@ -53,7 +54,6 @@ paths:
   data_dir: /dss/dsshome1/0B/di54kay/data/disfor
   log_dir: /dss/dsshome1/0B/di54kay/code/disfor-code/logs
 default_overrides:
-  data: disfor
   test: "false"
   trainer: gpu
   data.num_workers: "16"
@@ -61,5 +61,5 @@ default_overrides:
 features:
   job_chaining: false
 launcher:
-  command_prefix: uv run
+  command_prefix: uv run --group embeddings
 project: disfor

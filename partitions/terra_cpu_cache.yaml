@@ -1,10 +1,10 @@
-name: terra_cpu_nc
+name: terra_cpu_cache
 gpu_type: CPU
 remote_host: Terra
 default: false
 slurm:
   account: pn52pi-c
-  job_name_prefix: TERRA-CPU-NC
+  job_name_prefix: TERRA-CPU-CACHE
   gres: null
   partition: hpda2_compute
   constraint: null
@@ -39,6 +39,12 @@ environment:
   pre_run:
     - 'echo "Running on host: $(hostname)"'
     - 'export CUDA_VISIBLE_DEVICES=""'
+    - 'export DISFOR_SOURCE="${DISFOR_SOURCE:-${PWD}/data/disfor}"'
+    - 'export DISFOR_LOCAL_ROOT="${DISFOR_LOCAL_ROOT:-/tmp/${USER}/disfor}"'
+    - 'export DISFOR_PREFETCH_JOBS="${DISFOR_PREFETCH_JOBS:-4}"'
+    - 'export DISFOR_MIN_FREE_GB="${DISFOR_MIN_FREE_GB:-100}"'
+    - 'export DISFOR_OVERLAY_WAIT_SECONDS="${DISFOR_OVERLAY_WAIT_SECONDS:-1800}"'
+    - 'export DISFOR_PREFETCH_LOG="${DISFOR_PREFETCH_LOG:-${DISFOR_LOCAL_ROOT}.prefetch.log}"'
   exports: {}
   wandb:
     mode: offline
@@ -60,5 +66,14 @@ default_overrides:
 features:
   job_chaining: false
 launcher:
-  command_prefix: uv run
+  command_prefix: >-
+    uv run python scripts/sbatch/local_cache/local_cache.py run
+    --source "${DISFOR_SOURCE}"
+    --destination "${DISFOR_LOCAL_ROOT}"
+    --jobs "${DISFOR_PREFETCH_JOBS}"
+    --min-free-gb "${DISFOR_MIN_FREE_GB}"
+    --wait-seconds "${DISFOR_OVERLAY_WAIT_SECONDS}"
+    --prefetch-log "${DISFOR_PREFETCH_LOG}"
+    --append-data-root data.data_root
+    -- uv run
 project: disfor
