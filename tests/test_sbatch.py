@@ -1,7 +1,13 @@
 from dataclasses import replace
 
 from src.args import ControlParams
-from src.models import EnvironmentConfig, PartitionConfig, PathsConfig, ResourcesConfig, SlurmConfig
+from src.models import (
+    EnvironmentConfig,
+    PartitionConfig,
+    PathsConfig,
+    ResourcesConfig,
+    SlurmConfig,
+)
 from src.paths import plan_run_paths
 from src.resources import calculate_resources
 from src.sbatch import SbatchContext, render_sbatch
@@ -34,7 +40,12 @@ def partition() -> PartitionConfig:
             exclusive=True,
             multi_gpu_overrides={"trainer.strategy": "ddp"},
         ),
-        paths=PathsConfig(remote_launcher_dir="/launcher", default_project_dir="/proj", data_dir="/data", log_dir="/logs"),
+        paths=PathsConfig(
+            remote_launcher_dir="/launcher",
+            default_project_dir="/proj",
+            data_dir="/data",
+            log_dir="/logs",
+        ),
         environment=EnvironmentConfig(
             activate_command="env activate custom",
             shell_init="/home/me/.bashrc",
@@ -58,7 +69,16 @@ def context(controls: ControlParams, tokens: list[str] | None = None) -> SbatchC
     job = parse_sweep(tokens or ["data.csv", "lr=1e-3"]).jobs[0]
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    return SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    return SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
 
 def test_header_contains_resource_directives_and_tag() -> None:
@@ -102,12 +122,26 @@ def test_environment_and_command_are_rendered() -> None:
 
 def test_activate_command_is_used_for_activation() -> None:
     base = partition()
-    p = replace(base, environment=replace(base.environment, activate_command="micromamba activate custom"))
+    p = replace(
+        base,
+        environment=replace(
+            base.environment, activate_command="micromamba activate custom"
+        ),
+    )
     controls = ControlParams(gpu=1)
     job = parse_sweep(["lr=1e-3"]).jobs[0]
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
     script = render_sbatch(ctx)
 
@@ -117,12 +151,24 @@ def test_activate_command_is_used_for_activation() -> None:
 
 def test_activate_command_is_used_when_configured() -> None:
     base = partition()
-    p = replace(base, environment=replace(base.environment, activate_command="env activate custom"))
+    p = replace(
+        base,
+        environment=replace(base.environment, activate_command="env activate custom"),
+    )
     controls = ControlParams(gpu=1)
     job = parse_sweep(["lr=1e-3"]).jobs[0]
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
     script = render_sbatch(ctx)
 
@@ -136,7 +182,16 @@ def test_null_activate_command_skips_activation() -> None:
     job = parse_sweep(["lr=1e-3"]).jobs[0]
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
     script = render_sbatch(ctx)
 
@@ -161,7 +216,16 @@ def test_cpu_only_partition_omits_gpu_directives() -> None:
     job = parse_sweep(["lr=1e-3"]).jobs[0]
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
     script = render_sbatch(ctx)
 
@@ -171,6 +235,34 @@ def test_cpu_only_partition_omits_gpu_directives() -> None:
     assert "trainer=cpu" in script
     assert "trainer.devices=" not in script
     assert "trainer.num_nodes=1" in script
+
+
+def test_explicit_override_takes_precedence_over_partition_default() -> None:
+    base = partition()
+    p = replace(
+        base,
+        default_overrides={"model.compile": "false", "data.num_workers": "16"},
+    )
+    controls = ControlParams(gpu=1)
+    job = parse_sweep(["model.compile=true"]).jobs[0]
+    resources = calculate_resources(controls.gpu, p)
+    paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
+
+    script = render_sbatch(ctx)
+
+    assert script.count("model.compile=true") == 1
+    assert "model.compile=false" not in script
+    assert "data.num_workers=16" in script
 
 
 def test_command_prefix_is_raw_shell_prefix() -> None:
@@ -185,11 +277,23 @@ def test_command_prefix_is_raw_shell_prefix() -> None:
     job = parse_sweep(["lr=1e-3"]).jobs[0]
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
     script = render_sbatch(ctx)
 
-    assert 'uv run python cache.py run --source "${DISFOR_SOURCE}" -- uv run python -u train.py' in script
+    assert (
+        'uv run python cache.py run --source "${DISFOR_SOURCE}" -- uv run python -u train.py'
+        in script
+    )
 
 
 def test_batch_multi_gpu_and_wandb_overrides() -> None:
@@ -223,8 +327,8 @@ def test_wandb_name_and_group_replace_equals_signs() -> None:
 
     assert 'logger.wandb.name="ts_model_loss-MAEMLP-Contra_meta_key_depth-0"' in script
     assert 'logger.wandb.group="/logs/train/ts/model_loss-MAEMLP-Contra"' in script
-    assert "logger.wandb.name=\"ts_model_loss=MAEMLP" not in script
-    assert "logger.wandb.group=\"/logs/train/ts/model_loss=MAEMLP" not in script
+    assert 'logger.wandb.name="ts_model_loss=MAEMLP' not in script
+    assert 'logger.wandb.group="/logs/train/ts/model_loss=MAEMLP' not in script
 
 
 def test_dev_uses_dev_qos() -> None:
@@ -247,7 +351,16 @@ def test_time_min_is_omitted_when_not_lower_than_job_time() -> None:
     controls = ControlParams(dev=True)
     resources = calculate_resources(controls.gpu, p)
     paths = plan_run_paths(p, "train.py", controls, job, index=0, timestamp="ts")
-    ctx = SbatchContext(p, "/proj", "train.py", controls, job, resources, resolve_time(controls, p), paths)
+    ctx = SbatchContext(
+        p,
+        "/proj",
+        "train.py",
+        controls,
+        job,
+        resources,
+        resolve_time(controls, p),
+        paths,
+    )
 
     script = render_sbatch(ctx)
 
@@ -312,13 +425,17 @@ def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None
         launcher={"command_prefix": "srun"},
     )
     controls = ControlParams(name="Ub_Maybe_Final", gpu=8)
-    job = parse_sweep([
-        "exp=GeoPlex_Uni_MAE",
-        "model.network.instance.predictor.dates_to_select=4",
-        "seed=43",
-    ]).jobs[0]
+    job = parse_sweep(
+        [
+            "exp=GeoPlex_Uni_MAE",
+            "model.network.instance.predictor.dates_to_select=4",
+            "seed=43",
+        ]
+    ).jobs[0]
     resources = calculate_resources(controls.gpu, p)
-    paths = plan_run_paths(p, "src/train.py", controls, job, index=4, timestamp="20260402-1558")
+    paths = plan_run_paths(
+        p, "src/train.py", controls, job, index=4, timestamp="20260402-1558"
+    )
     ctx = SbatchContext(
         p,
         "/lustre/fswork/projects/rech/msf/uih12tb/AnySat",
@@ -342,8 +459,14 @@ def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None
     assert "#SBATCH --time=19:59:59" in script
     assert "#SBATCH --time-min=19:00:00" in script
     assert "#SBATCH --qos=qos_gpu_h100-t3" in script
-    assert "#SBATCH --output=/lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/test%j/log.txt" in script
-    assert "#SBATCH --error=/lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/test%j/log.txt" in script
+    assert (
+        "#SBATCH --output=/lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/test%j/log.txt"
+        in script
+    )
+    assert (
+        "#SBATCH --error=/lustre/fsn1/projects/rech/msf/uih12tb/logs/outputs/test%j/log.txt"
+        in script
+    )
     assert "#SBATCH --constraint=h100" in script
     assert "#SBATCH --signal=SIGUSR1@600" in script
     assert "module purge" in script
@@ -356,4 +479,7 @@ def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None
     assert "trainer.devices=4" in script
     assert "trainer.num_nodes=2" in script
     assert "num_workers=8" in script
-    assert "hydra.run.dir=/lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/train/20260402-1558-Ub_Maybe_Final/4" in script
+    assert (
+        "hydra.run.dir=/lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/train/20260402-1558-Ub_Maybe_Final/4"
+        in script
+    )

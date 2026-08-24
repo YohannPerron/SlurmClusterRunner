@@ -33,7 +33,7 @@ class SbatchContext:
 def render_sbatch(ctx: SbatchContext) -> str:
     """Render a complete sbatch script for one expanded job."""
 
-    lines = ["#!/bin/bash -l", * _slurm_header(ctx), "", "set -eo pipefail", ""]
+    lines = ["#!/bin/bash -l", *_slurm_header(ctx), "", "set -eo pipefail", ""]
     lines.append(f"cd {shlex.quote(ctx.project_path)}")
     lines.extend(_environment_lines(ctx))
     lines.append("")
@@ -47,8 +47,18 @@ def _slurm_header(ctx: SbatchContext) -> list[str]:
     p = ctx.partition
     s = p.slurm
     r = ctx.resources
-    job_name_parts = [part for part in [s.job_name_prefix, PurePosixPath(ctx.executable).stem, ctx.controls.name] if part]
-    header = [f"#SBATCH --job-name={_slurm_value('-'.join(job_name_parts) or 'newrunner')}"]
+    job_name_parts = [
+        part
+        for part in [
+            s.job_name_prefix,
+            PurePosixPath(ctx.executable).stem,
+            ctx.controls.name,
+        ]
+        if part
+    ]
+    header = [
+        f"#SBATCH --job-name={_slurm_value('-'.join(job_name_parts) or 'newrunner')}"
+    ]
     optional = {
         "account": s.account,
         "partition": s.partition,
@@ -129,8 +139,13 @@ def _command_line(ctx: SbatchContext) -> str:
 
 def _injected_overrides(ctx: SbatchContext) -> list[str]:
     overrides: list[str] = []
+    explicit_keys = {
+        override.lstrip("+~").split("=", maxsplit=1)[0]
+        for override in ctx.sweep_job.hydra_overrides
+    }
     for key, value in ctx.partition.default_overrides.items():
-        overrides.append(f"{key}={value}")
+        if key not in explicit_keys:
+            overrides.append(f"{key}={value}")
     if ctx.controls.batch is not None:
         if ctx.controls.batch % ctx.controls.gpu != 0:
             raise ValueError("BATCH must be divisible by GPU")
@@ -145,10 +160,14 @@ def _injected_overrides(ctx: SbatchContext) -> list[str]:
     wandb = ctx.partition.environment.wandb
     if wandb.get("set_name"):
         name_key = wandb.get("name_key", "wandb.name")
-        overrides.append(f"{name_key}={_hydra_string(_wandb_label(ctx.paths.wandb_name))}")
+        overrides.append(
+            f"{name_key}={_hydra_string(_wandb_label(ctx.paths.wandb_name))}"
+        )
     if wandb.get("set_group"):
         group_key = wandb.get("group_key", "wandb.group")
-        overrides.append(f"{group_key}={_hydra_string(_wandb_label(ctx.paths.run_root))}")
+        overrides.append(
+            f"{group_key}={_hydra_string(_wandb_label(ctx.paths.run_root))}"
+        )
     return overrides
 
 
