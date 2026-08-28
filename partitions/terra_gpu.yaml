@@ -41,7 +41,8 @@ environment:
   activate_command: uv sync
   pre_run:
     - 'echo "Running on host: $(hostname)"'
-  exports: {}
+  exports:
+    WANDB_MODE: offline
   wandb:
     mode: offline
     set_name: true
