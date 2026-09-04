@@ -20,7 +20,7 @@ slurm:
   output: /dss/dsshome1/0B/di54kay/outputs/%j.log
   error: /dss/dsshome1/0B/di54kay/outputs/%j.log
   require_tag: false
-  exclude: hpdar04c01s01
+  exclude: hpdar04c04s02
   mem: 256G
   mail-user: yohann.perron@dm3l.uzh.ch
 resources:
