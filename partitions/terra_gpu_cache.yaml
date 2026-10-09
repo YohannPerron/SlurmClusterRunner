@@ -63,7 +63,7 @@ default_overrides:
   data: disfor
   test: "false"
   trainer: gpu
-  data.num_workers: "16"
+  data.num_workers: "22"
   model.compile: "false"
 features:
   job_chaining: false
