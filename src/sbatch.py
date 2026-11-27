@@ -66,7 +66,7 @@ def _slurm_header(ctx: SbatchContext) -> list[str]:
         "constraint": s.constraint,
         "gres": f"{s.gres}:{r.gpus_per_node}" if s.gres else None,
         "nodes": r.nodes,
-        "gpus-per-node": r.gpus_per_node if r.gpus_per_node else None,
+        "gpus-per-node": r.gpus_per_node if (r.gpus_per_node and not (s.gres and ":" in s.gres)) else None,
         "ntasks-per-node": r.ntasks_per_node,
         "cpus-per-task": r.cpus_per_task,
         "time": ctx.time.wall_time,
