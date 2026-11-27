@@ -20,7 +20,7 @@ slurm:
   output: /dss/dsshome1/0B/di54kay/outputs/%j.log
   error: /dss/dsshome1/0B/di54kay/outputs/%j.log
   require_tag: false
-  exclude: hpdar04c04s02
+  exclude: hpdar01c03s02
   mem: 256G
   mail-user: yohann.perron@dm3l.uzh.ch
 resources:
@@ -41,10 +41,8 @@ environment:
   activate_command: uv sync
   pre_run:
     - 'echo "Running on host: $(hostname)"'
-  exports:
-    WANDB_MODE: offline
+  exports: {}
   wandb:
-    mode: offline
     set_name: true
     set_group: true
     name_key: logger.wandb.name

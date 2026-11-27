@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from src.config import ConfigError, default_partitions_dir, load_partitions, select_partition
+from src.config import (
+    ConfigError,
+    default_partitions_dir,
+    load_partitions,
+    select_partition,
+)
 
 
 BASE = """
@@ -52,7 +57,10 @@ def test_valid_partition_loads(tmp_path):
 
 
 def test_activate_command_loads_and_can_be_null(tmp_path):
-    write_partition(tmp_path, text=BASE.replace("  exports: {}", "  activate_command: null\n  exports: {}"))
+    write_partition(
+        tmp_path,
+        text=BASE.replace("  exports: {}", "  activate_command: null\n  exports: {}"),
+    )
 
     partition = load_partitions(tmp_path)[0]
 
@@ -60,7 +68,12 @@ def test_activate_command_loads_and_can_be_null(tmp_path):
 
 
 def test_activate_command_loads(tmp_path):
-    write_partition(tmp_path, text=BASE.replace("  exports: {}", "  activate_command: env activate custom\n  exports: {}"))
+    write_partition(
+        tmp_path,
+        text=BASE.replace(
+            "  exports: {}", "  activate_command: env activate custom\n  exports: {}"
+        ),
+    )
 
     partition = load_partitions(tmp_path)[0]
 
@@ -95,7 +108,11 @@ def test_no_default_fails(tmp_path):
 
 def test_partition_selection_works(tmp_path):
     write_partition(tmp_path, "p1", BASE.replace("default: true", "default: false"))
-    write_partition(tmp_path, "p2", BASE.replace("name: p1", "name: p2").replace("default: true", "default: false"))
+    write_partition(
+        tmp_path,
+        "p2",
+        BASE.replace("name: p1", "name: p2").replace("default: true", "default: false"),
+    )
 
     partition = select_partition(load_partitions(tmp_path), partition_name="p2")
 
@@ -130,3 +147,21 @@ def test_default_partition_dir_is_not_current_working_directory(tmp_path, monkey
     partitions = load_partitions()
 
     assert {partition.name for partition in partitions} >= {"jz-a100", "ada-mi300"}
+
+
+def test_uzh_l4_wegner_partition_loads():
+    partition = select_partition(load_partitions(), partition_name="UZH_L4_wegner")
+
+    assert partition.remote_host == "UZH"
+    assert partition.gpu_type == "L4"
+    assert partition.slurm.partition == "wegner"
+    assert partition.slurm.gres == "gpu:L4"
+    assert partition.slurm.max_time_hours == 72
+    assert partition.slurm.default_time == "72:00:00"
+    assert partition.slurm.extra.get("mem") == 0
+    assert partition.slurm.output == "/home/yperro/logs/%x_%j.out"
+    assert partition.slurm.error == "/home/yperro/logs/%x_%j.err"
+    assert partition.resources.gpu_per_node == 1
+    assert partition.resources.cpu_per_gpu == 15
+    assert partition.resources.cpu_per_node == 15
+    assert partition.resources.exclusive is True

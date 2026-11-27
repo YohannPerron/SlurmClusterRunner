@@ -1,0 +1,66 @@
+default: false
+default_overrides:
+  data.num_workers: '16'
+  model.compile: 'false'
+  test: 'false'
+  trainer: gpu
+environment:
+  activate_command: flock -x /dss/dsshome1/0B/di54kay/work/worktrees/t3code-1e61b580/.uv-sync.lock
+    uv sync
+  exports:
+    UV_PROJECT_ENVIRONMENT: .venv-satmae
+  pre_run:
+  - 'echo "Running on host: $(hostname)"'
+  shell_init: null
+  wandb:
+    group_key: logger.wandb.group
+    name_key: logger.wandb.name
+    set_group: true
+    set_name: true
+features:
+  job_chaining: false
+gpu_type: GPU
+launcher:
+  command_prefix: uv run
+modules:
+  load:
+  - uv
+  - gcc
+  - git/2.49.0
+  purge: false
+name: terra_gpu_disfor_ablation_satmae
+paths:
+  data_dir: /dss/dsshome1/0B/di54kay/data/disfor
+  default_project_dir: /dss/dsshome1/0B/di54kay/work/worktrees/t3code-1e61b580
+  log_dir: /dss/dsshome1/0B/di54kay/work/worktrees/t3code-1e61b580/logs
+  remote_launcher_dir: scripts/sbatch/local_cache
+project: disfor
+remote_host: Terra
+resources:
+  cpu_per_gpu: 24
+  exclusive: false
+  gpu_per_node: 1
+  multi_gpu_overrides:
+    trainer: ddp
+  task_mode: per_gpu
+slurm:
+  account: pn52pi-c
+  constraint: null
+  default_time: '48:00:00'
+  dev_qos: null
+  dev_time: '2:00:00'
+  error: /dss/dsshome1/0B/di54kay/outputs/%j.log
+  exclude: hpdar04c04s02
+  gres: gpu
+  hint: null
+  job_name_prefix: TERRA-GPU
+  mail-user: yohann.perron@dm3l.uzh.ch
+  max_time_hours: 240
+  mem: 256G
+  min_time: null
+  output: /dss/dsshome1/0B/di54kay/outputs/%j.log
+  partition: hpda2_compute_gpu
+  qos: null
+  require_tag: false
+  signal: null
+  use_min_time_default: false

@@ -42,7 +42,6 @@ environment:
     - 'export CUDA_VISIBLE_DEVICES=""'
   exports: {}
   wandb:
-    mode: offline
     set_name: true
     set_group: true
     name_key: logger.wandb.name

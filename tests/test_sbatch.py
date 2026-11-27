@@ -308,9 +308,7 @@ def test_batch_multi_gpu_and_wandb_overrides() -> None:
 
 
 def test_wandb_name_includes_name_meta_parameter() -> None:
-    script = render_sbatch(
-        context(ControlParams(name="baseline"), ["lr=1e-3,1e-4"])
-    )
+    script = render_sbatch(context(ControlParams(name="baseline"), ["lr=1e-3,1e-4"]))
 
     assert 'logger.wandb.name="ts_baseline_lr-1e-3"' in script
     assert "/ts-baseline-lr/0_lr-1e-3" in script
@@ -483,3 +481,42 @@ def test_jz_h100_script_matches_expected_shape_with_obfuscated_account() -> None
         "hydra.run.dir=/lustre/fsn1/projects/rech/msf/uih12tb/logs_AnySat/train/20260402-1558-Ub_Maybe_Final/4"
         in script
     )
+
+
+def test_uzh_l4_wegner_sbatch_rendering() -> None:
+    from src.config import load_partitions, select_partition
+
+    partition = select_partition(load_partitions(), partition_name="UZH_L4_wegner")
+    controls = ControlParams(gpu=1, name="process_stack")
+    job = parse_sweep([]).jobs[0]
+    resources = calculate_resources(controls.gpu, partition)
+    paths = plan_run_paths(
+        partition, "train.py", controls, job, index=0, timestamp="20260904-1000"
+    )
+    ctx = SbatchContext(
+        partition=partition,
+        project_path=partition.paths.default_project_dir,
+        executable="train.py",
+        controls=controls,
+        sweep_job=job,
+        resources=resources,
+        time=resolve_time(controls, partition),
+        paths=paths,
+    )
+    script = render_sbatch(ctx)
+
+    assert "#SBATCH --partition=wegner" in script
+    assert "#SBATCH --gres=gpu:L4:1" in script
+    assert "#SBATCH --nodes=1" in script
+    assert "#SBATCH --exclusive" in script
+    assert "#SBATCH --mem=0" in script
+    assert "#SBATCH --ntasks-per-node=1" in script
+    assert "#SBATCH --cpus-per-task=15" in script
+    assert "#SBATCH --time=72:00:00" in script
+    assert "#SBATCH --output=/home/yperro/logs/%x_%j.out" in script
+    assert "#SBATCH --error=/home/yperro/logs/%x_%j.err" in script
+    assert "export SRUN_CPUS_PER_TASK=15" in script
+    assert "export OMP_NUM_THREADS=15" in script
+    assert "data.num_workers=15" in script
+    assert "uv sync" in script
+    assert "uv run python -u train.py" in script

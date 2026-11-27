@@ -1,0 +1,64 @@
+name: terra_cpu_map_filtered_aggregate
+gpu_type: CPU
+remote_host: Terra
+default: false
+slurm:
+  account: pn52pi-c
+  job_name_prefix: TERRA-CPU
+  gres: null
+  partition: hpda2_compute
+  constraint: null
+  qos: null
+  dev_qos: null
+  max_time_hours: 240
+  default_time: '10:00:00'
+  dev_time: '2:00:00'
+  min_time: null
+  use_min_time_default: false
+  hint: null
+  signal: null
+  output: /dss/dsshome1/0B/di54kay/outputs/%j.log
+  error: /dss/dsshome1/0B/di54kay/outputs/%j.log
+  require_tag: false
+  mem-per-cpu: 6G
+  dependency: afterok:14961981
+resources:
+  gpu_per_node: 0
+  cpu_per_gpu: 40
+  cpu_per_node: 40
+  task_mode: per_node
+  exclusive: false
+  multi_gpu_overrides: {}
+modules:
+  purge: false
+  load:
+  - uv
+  - gcc
+  - git/2.49.0
+environment:
+  shell_init: null
+  activate_command: uv sync
+  pre_run:
+  - 'echo "Running on host: $(hostname)"'
+  - export CUDA_VISIBLE_DEVICES=""
+  exports: {}
+  wandb:
+    set_name: true
+    set_group: true
+    name_key: logger.wandb.name
+    group_key: logger.wandb.group
+paths:
+  remote_launcher_dir: scripts/sbatch/local_cache
+  default_project_dir: /dss/dsshome1/0B/di54kay/work/worktrees/t3-194078de-filtered
+  data_dir: /dss/dsshome1/0B/di54kay/data/disfor
+  log_dir: /dss/dsshome1/0B/di54kay/work/worktrees/t3-194078de-filtered/logs
+default_overrides:
+  test: 'false'
+  trainer: cpu
+  data.num_workers: '20'
+  model.compile: 'false'
+features:
+  job_chaining: false
+launcher:
+  command_prefix: uv run
+project: disfor

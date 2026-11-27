@@ -1,0 +1,61 @@
+name: UZH_L4_wegner
+gpu_type: L4
+remote_host: UZH
+default: false
+slurm:
+  account: null
+  job_name_prefix: UZH-L4
+  gres: gpu:L4
+  partition: wegner
+  constraint: null
+  qos: null
+  dev_qos: null
+  max_time_hours: 72
+  default_time: "72:00:00"
+  dev_time: "2:00:00"
+  min_time: null
+  use_min_time_default: false
+  hint: null
+  signal: null
+  output: /home/yperro/logs/%x_%j.out
+  error: /home/yperro/logs/%x_%j.err
+  require_tag: false
+  mem: 0
+resources:
+  gpu_per_node: 1
+  cpu_per_gpu: 15
+  cpu_per_node: 15
+  task_mode: per_gpu
+  exclusive: true
+  multi_gpu_overrides:
+    trainer: ddp
+modules:
+  purge: false
+  load: []
+environment:
+  shell_init: null
+  activate_command: uv sync
+  pre_run:
+    - 'echo "Running on host: $(hostname)"'
+  exports:
+    SRUN_CPUS_PER_TASK: "15"
+    OMP_NUM_THREADS: "15"
+    WANDB_MODE: offline
+  wandb:
+    mode: offline
+    set_name: true
+    set_group: true
+    name_key: logger.wandb.name
+    group_key: logger.wandb.group
+paths:
+  remote_launcher_dir: /home/yperro/code/SlurmClusterRunner
+  default_project_dir: /home/yperro/code/disfor-code
+  data_dir: /scratch/yperro/data
+  log_dir: /home/yperro/logs
+default_overrides:
+  data.num_workers: "15"
+features:
+  job_chaining: false
+launcher:
+  command_prefix: uv run
+project: disfor

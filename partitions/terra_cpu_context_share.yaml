@@ -1,0 +1,72 @@
+name: terra_cpu_context_share
+gpu_type: CPU
+remote_host: Terra
+default: false
+slurm:
+  account: pn52pi-c
+  job_name_prefix: TERRA-CPU
+  gres: null
+  partition: hpda2_compute
+  constraint: null
+  qos: null
+  dev_qos: null
+  max_time_hours: 240
+  default_time: '10:00:00'
+  dev_time: '2:00:00'
+  min_time: null
+  use_min_time_default: false
+  hint: null
+  signal: null
+  output: /dss/dsstbyfs02/pn49cu/pn49cu-dss-0010/forest/generated/baseline_context_reruns/logs/%j.log
+  error: /dss/dsstbyfs02/pn49cu/pn49cu-dss-0010/forest/generated/baseline_context_reruns/logs/%j.log
+  require_tag: false
+  mem-per-cpu: 6G
+resources:
+  gpu_per_node: 0
+  cpu_per_gpu: 40
+  cpu_per_node: 40
+  task_mode: per_node
+  exclusive: false
+  multi_gpu_overrides: {}
+modules:
+  purge: false
+  load:
+  - uv
+  - gcc
+  - git/2.49.0
+environment:
+  shell_init: null
+  activate_command: ':'
+  pre_run:
+  - 'echo "Running on host: $(hostname)"'
+  - export CUDA_VISIBLE_DEVICES=""
+  - export XDG_CACHE_HOME="${TMPDIR:-/tmp}/disfor-cache-${SLURM_JOB_ID}"
+  - export NUMBA_CACHE_DIR="${TMPDIR:-/tmp}/disfor-numba-${SLURM_JOB_ID}"
+  - export MPLCONFIGDIR="${TMPDIR:-/tmp}/disfor-mpl-${SLURM_JOB_ID}"
+  exports:
+    PYTHONDONTWRITEBYTECODE: '1'
+    OMP_NUM_THREADS: '1'
+    OPENBLAS_NUM_THREADS: '1'
+    MKL_NUM_THREADS: '1'
+    NUMBA_NUM_THREADS: '1'
+  wandb:
+    set_name: true
+    set_group: true
+    name_key: logger.wandb.name
+    group_key: logger.wandb.group
+paths:
+  remote_launcher_dir: /dss/dsstbyfs02/pn49cu/pn49cu-dss-0010/forest/generated/baseline_context_reruns/launcher
+  default_project_dir: /dss/dsshome1/0B/di54kay/code/disfor-code
+  data_dir: /dss/dsshome1/0B/di54kay/data/disfor
+  log_dir: /dss/dsstbyfs02/pn49cu/pn49cu-dss-0010/forest/generated/baseline_context_reruns/logs
+default_overrides:
+  test: 'false'
+  trainer: cpu
+  data.num_workers: '20'
+  model.compile: 'false'
+  data.data_root: /dss/dsstbyfs02/pn49cu/pn49cu-dss-0010/forest/disfor_extended
+features:
+  job_chaining: false
+launcher:
+  command_prefix: uv run --no-sync
+project: disfor

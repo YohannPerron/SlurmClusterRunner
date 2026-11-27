@@ -43,7 +43,6 @@ environment:
     - 'echo "Running on host: $(hostname)"'
   exports: {}
   wandb:
-    mode: offline
     set_name: true
     set_group: true
     name_key: logger.wandb.name
