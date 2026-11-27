@@ -117,6 +117,13 @@ def test_project_partitions_load():
     assert {partition.name for partition in partitions} >= {"jz-a100", "ada-mi300"}
 
 
+@pytest.mark.parametrize("gpu", ["a100", "h100"])
+def test_jz_default_allocation(gpu):
+    partition = select_partition(load_partitions(), partition_name=f"jz-{gpu}")
+
+    assert partition.slurm.account == f"msf@{gpu}"
+
+
 def test_default_partition_dir_is_not_current_working_directory(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 

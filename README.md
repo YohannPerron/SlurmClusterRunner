@@ -108,6 +108,10 @@ Sweeping `GPU`, `CPU`, `PARTITION`, and `BATCH` is allowed by default. Sweeping 
 uv run runner --allow-control-sweeps <executable> NAME=a,b ...
 ```
 
+JZ A100 and H100 partitions default to allocation `AD011014781R2` (project
+`msf`), using `msf@a100` and `msf@h100`, respectively. V100 uses `ppm@v100`
+because this allocation has no V100 account.
+
 ## Parameter sweeps
 
 Any comma-separated value creates a sweep axis. SlurmClusterRunner expands all axes as a Cartesian product.

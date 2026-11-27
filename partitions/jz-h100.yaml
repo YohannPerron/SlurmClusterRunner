@@ -3,7 +3,7 @@ gpu_type: H100
 remote_host: JZ
 default: false
 slurm:
-  account: uhn@h100
+  account: msf@h100
   job_name_prefix: H100
   gres: gpu
   partition: null

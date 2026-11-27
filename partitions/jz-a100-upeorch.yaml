@@ -1,0 +1,79 @@
+# Task-specific JZ A100 partition for the UPE compile-orchestration benchmark.
+#
+# Deliberately unique name and `default: false`: this file changes no shared
+# cluster default. The SlurmClusterRunner reads partitions only from its own
+# `partitions/` directory (there is no `--config-dir` flag), so copy this file
+# there before calling `uv run runner PARTITION=jz-a100-upeorch ...`.
+#
+# All remote paths are task-specific and disjoint from the shared AnySat project
+# and from the sibling `UPE_bench` harness. This tree lives on `fsn1`, NOT on
+# `fswork`: the `fswork` MDT inode pool is 100% full (500000/500000) as of
+# 2026-10-28, so no new file or directory can be created there. `fsn1` has 150M
+# inodes.
+name: jz-a100-upeorch
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    account: msf@a100
+    job_name_prefix: UPEORCH
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-t3
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: ./src
+        # The shared jz-a100.yaml sets TORCHDYNAMO_DISABLE=1, which disables
+        # torch.compile entirely; the compiled A/B must re-enable it.
+        TORCHDYNAMO_DISABLE: "0"
+        # Task-unique, isolated Inductor cache on fsn1 (never the shared default).
+        TORCHINDUCTOR_CACHE_DIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/inductor
+        TMPDIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/tmp
+        PYTHONDONTWRITEBYTECODE: "1"
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_MODE: offline
+    wandb:
+        mode: offline
+        set_name: false
+        set_group: false
+paths:
+    remote_launcher_dir: upe_orch/launcher/jz-a100-upeorch
+    # `5e80c9f` is substituted with the commit being benchmarked.
+    default_project_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/code/5e80c9f
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs
+# The benchmark is plain argparse; strip the AnySat Hydra defaults so they are
+# not injected as junk argv.
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: AnySat

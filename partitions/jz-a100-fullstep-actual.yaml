@@ -1,0 +1,72 @@
+# Task-specific JZ A100 partition for the FULL SSL-training-step memory/throughput
+# A/B benchmark. Uniquely named and `default: false`: it never changes any
+# shared cluster default. Copy it into SlurmClusterRunner/partitions/ (the
+# runner reads that directory; there is no `--config-dir` flag).
+#
+# All paths are task-specific, on fsn1 (the fswork project dir is at its inode
+# quota), and disjoint from the shared AnySat project and other worktrees.
+name: jz-a100-fullstep-actual
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    dependency: afterany:1677558
+    account: msf@a100
+    job_name_prefix: FSTEP
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-t3
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/FullStep_bench/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/FullStep_bench/logs/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: .:./src
+        TORCHDYNAMO_DISABLE: "0"
+        PYTHONDONTWRITEBYTECODE: "1"
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_MODE: offline
+    pre_run:
+        - 'export TORCHINDUCTOR_CACHE_DIR="${JOBSCRATCH:-${SLURM_TMPDIR:-/tmp}}/inductor_${SLURM_JOB_ID:-0}"'
+        - 'export TMPDIR="${JOBSCRATCH:-${SLURM_TMPDIR:-/tmp}}/tmp_${SLURM_JOB_ID:-0}"'
+        - 'export HF_HOME="${JOBSCRATCH:-${TMPDIR:-/tmp}}/hf_${SLURM_JOB_ID:-0}"'
+        - 'mkdir -p "$TORCHINDUCTOR_CACHE_DIR" "$TMPDIR"'
+    wandb:
+        mode: offline
+        set_name: false
+        set_group: false
+paths:
+    remote_launcher_dir: FullStep_bench/launcher/jz-a100-fullstep
+    default_project_dir: /lustre/fsn1/projects/rech/msf/uih12tb/FullStep_bench/code/fstep-a45b460
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/FullStep_bench/logs
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: FullStep_bench

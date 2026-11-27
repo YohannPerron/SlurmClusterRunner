@@ -1,0 +1,95 @@
+# Task-specific JZ A100 partition for the 8-GPU distributed-strategy benchmark.
+#
+# Deliberately unique name and `default: false`: this file changes NO shared
+# cluster default. SlurmClusterRunner reads partitions only from its own
+# `partitions/` directory, so a coordinator copies this file there before
+# `uv run runner ... PARTITION=jz-a100-upedist ...`.
+#
+# This job is the ONE experiment the user explicitly authorised at 8x A100 on
+# the *dev* QoS (`qos_gpu_a100-dev`). Every other experiment stays single-GPU.
+# `DEV=true` selects `slurm.dev_qos` + `slurm.dev_time` (01:59:59) so the
+# allocation is bounded and short.
+#
+# Paths: the `fswork` MDT inode pool is exhausted (500000/500000 as of
+# 2026-10-28), so every new code / log / results / cache directory lives on
+# `fsn1` (150M inodes). Node-local scratch ($JOBSCRATCH) holds only the Inductor
+# and TMP caches.
+name: jz-a100-upedist
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    dependency: afterany:1675125
+    account: msf@a100
+    job_name_prefix: UPEDIST
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-t3
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/upe_dist/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/upe_dist/logs/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    # per_gpu -> --ntasks-per-node=8 --cpus-per-task=8. `launcher.command_prefix:
+    # srun` then launches exactly one Python process per GPU (8 ranks). Lightning
+    # sees SLURMEnvironment (creates_processes_externally=True) and reuses those
+    # 8 tasks instead of spawning; the benchmark itself never spawns, so there is
+    # no 8x8 = 64-rank nesting.
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: ".:./src:./tests"
+        # The benchmark imports tests/_dist_common.py (synthetic real-shape data),
+        # so tests/ must be importable.
+        PYTHONDONTWRITEBYTECODE: "1"
+        # This benchmark does not use torch.compile; leave Inductor off so no
+        # compile cache is needed at all.
+        TORCHDYNAMO_DISABLE: "1"
+        WANDB_MODE: offline
+        WANDB__SERVICE_WAIT: "300"
+        UPE_RESULTS_DIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_dist/results
+    pre_run:
+        - 'export TMPDIR="${JOBSCRATCH:-${SLURM_TMPDIR:-/tmp}}/tmp_${SLURM_JOB_ID:-0}"'
+        - 'export TORCHINDUCTOR_CACHE_DIR="${JOBSCRATCH:-${SLURM_TMPDIR:-/tmp}}/inductor_${SLURM_JOB_ID:-0}"'
+        - 'mkdir -p "$TMPDIR" "$TORCHINDUCTOR_CACHE_DIR"'
+    wandb:
+        mode: offline
+        set_name: false
+        set_group: false
+paths:
+    remote_launcher_dir: upe_dist/launcher/jz-a100-upedist
+    # The coordinator substitutes a commit-named snapshot (rsynced from the
+    # benchmark worktree) into this directory. Kept on fsn1 because fswork is at
+    # 100% inode usage.
+    default_project_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_dist/code/7c0bfbd2325592d15b6c669b0040ddba5583a9e4
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_dist/logs
+# The benchmark is plain argparse; strip the AnySat Hydra defaults so they are
+# not injected as junk argv.
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: AnySat

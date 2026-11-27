@@ -1,0 +1,72 @@
+# Task-specific SlurmClusterRunner partition for the UPE streaming/checkpoint
+# A100 benchmark. Derived from the shared `partitions/jz-a100.yaml` but:
+#   * `default: false`  -- never becomes the implicit default partition;
+#   * dev QoS only (`qos_gpu_a100-dev`, DEV=true, 2h) -- never the t3 QoS;
+#   * its own launcher / project / log / cache directories so it never touches
+#     the shared jz-a100 `AnySat` checkout, `logs_AnySat` or its env;
+#   * `TORCHDYNAMO_DISABLE: "0"` -- the shared profile exports `1`, which would
+#     silently reduce the ``--compile`` variants to eager;
+#   * `PYTHONPATH: src` and **no** `default_overrides` -- the standalone
+#     benchmark is argparse-based, so the Hydra/wandb/num_workers overrides of
+#     the training profile must not be injected.
+#
+# Copy to the runner checkout before use:
+#   cp benchmarks/jz-a100-upe-mem.yaml \
+#      /home/yperron/Projects/SlurmClusterRunner/partitions/jz-a100-upe-mem.yaml
+name: jz-a100-upe-mem
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    account: msf@a100
+    job_name_prefix: UPEmem
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-dev
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 2
+    default_time: "01:59:59"
+    dev_time: 01:59:59
+    min_time: "01:00:00"
+    use_min_time_default: false
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/logs_UPE_mem/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/logs_UPE_mem/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: src
+        TORCHDYNAMO_DISABLE: "0"
+        TMPDIR: /lustre/fswork/projects/rech/msf/uih12tb/UPE_mem_bench/tmp
+        TORCHINDUCTOR_CACHE_DIR: /lustre/fswork/projects/rech/msf/uih12tb/UPE_mem_bench/inductor
+        TRITON_CACHE_DIR: /lustre/fswork/projects/rech/msf/uih12tb/UPE_mem_bench/tmp/triton
+        WANDB_MODE: offline
+        WANDB__SERVICE_WAIT: "300"
+paths:
+    remote_launcher_dir: work/UPE_mem_bench/launcher
+    default_project_dir: /lustre/fswork/projects/rech/msf/uih12tb/UPE_mem_bench/UniverSat
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/logs_UPE_mem/
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: UPE_mem_bench

@@ -1,0 +1,79 @@
+# Task-specific JZ A100 partition for ONE short, low-overhead bounds-dump
+# diagnostic on the ORIGINAL candidate 5e80c9f (NO temporal patch; parent
+# c32c46f was reverted by 147c270).
+#
+# Unique name + `default: false`: changes no shared cluster default.
+# cwd pinned to a fresh clone code/5e80c9f-boundsdiag (immutable old untouched).
+# The parent's failure-only instrumentation is enabled via
+# UPE_DIAGNOSTIC_DUMP_BOUNDS_DIR: BoundVars.get_bounds is wrapped, and on
+# OverflowError the failing Inductor loop body is dumped to bounds-<uuid>.json
+# before re-raising. No result/precision change. The old
+# UPE_DIAGNOSTIC_SKIP_INDEX_STRENGTH_REDUCTION bypass is deliberately ABSENT.
+name: jz-a100-upedbnd
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    account: msf@a100
+    job_name_prefix: UPEDBND
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-t3
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: ./src
+        TORCHDYNAMO_DISABLE: "0"
+        # full tracing kept so a residual failure still yields a traceback
+        TORCHDYNAMO_VERBOSE: "1"
+        TORCH_LOGS: graph_breaks,recompiles
+        # failure-only instrumentation: dump the failing loop body here
+        # (replaced with a unique per-run dir at install time)
+        UPE_DIAGNOSTIC_DUMP_BOUNDS_DIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/boundsdump-upedbnd-20261028-224945
+        # fresh, run-unique compiler cache
+        TORCHINDUCTOR_CACHE_DIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/inductor-dbnd-upedbnd-20261028-224945
+        TMPDIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/tmp
+        PYTHONDONTWRITEBYTECODE: "1"
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_MODE: offline
+    wandb:
+        mode: offline
+        set_name: false
+        set_group: false
+paths:
+    remote_launcher_dir: upe_orch/launcher/jz-a100-upedbnd
+    default_project_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/code/5e80c9f-boundsdiag
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: AnySat

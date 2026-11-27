@@ -1,0 +1,85 @@
+# Task-specific JZ A100 partition for the end-to-end pretraining throughput
+# harness (owned by the e2e-throughput sub-agent).
+#
+# Unique name + `default: false`: changes no shared cluster default. The
+# `5237e8b` placeholder is substituted at install time with a per-arm
+# immutable snapshot directory, so the baseline and the variant arm never share
+# a mutated working tree.
+name: jz-a100-e2e
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    dependency: afterany:1712251
+    account: msf@a100
+    job_name_prefix: E2E
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-t3
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/e2e_bench/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/e2e_bench/logs/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: .:./src
+        # The default jz-a100.yaml sets TORCHDYNAMO_DISABLE=1; the harness must
+        # measure the real recipe, which compiles UPE_forward / ViT_forward.
+        TORCHDYNAMO_DISABLE: "0"
+        # Count every recompile that happens inside the measured window.
+        TORCH_LOGS: recompiles,graph_breaks
+        # Avoid BLAS/OMP oversubscription across the dataloader worker pool.
+        OMP_NUM_THREADS: "1"
+        MKL_NUM_THREADS: "1"
+        OPENBLAS_NUM_THREADS: "1"
+        PYTHONDONTWRITEBYTECODE: "1"
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_MODE: offline
+    # Inductor cache + TMPDIR are node-local ($JOBSCRATCH, made by the JZ
+    # prolog). The shared lustre project dir must not hold the compile cache
+    # (EDQUOT). Artifacts (results JSON) go to fsn1.
+    pre_run:
+        - 'export TORCHINDUCTOR_CACHE_DIR="${JOBSCRATCH:-${SLURM_TMPDIR:-/tmp}}/inductor_${SLURM_JOB_ID:-0}"'
+        - 'export TMPDIR="${JOBSCRATCH:-${SLURM_TMPDIR:-/tmp}}/tmp_${SLURM_JOB_ID:-0}"'
+        - 'export HF_HOME="${JOBSCRATCH:-${TMPDIR:-/tmp}}/hf_${SLURM_JOB_ID:-0}"'
+        - 'mkdir -p "$TORCHINDUCTOR_CACHE_DIR" "$TMPDIR"'
+    wandb:
+        mode: offline
+        set_name: false
+        set_group: false
+paths:
+    remote_launcher_dir: e2e_bench/launcher/jz-a100-e2e
+    default_project_dir: /lustre/fsn1/projects/rech/msf/uih12tb/e2e_bench/code/5237e8b
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/e2e_bench/logs
+# The harness is plain argparse; drop the AnySat Hydra defaults the runner would
+# otherwise append as junk argv.
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: UniverSat

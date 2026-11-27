@@ -1,0 +1,72 @@
+# Task-specific JZ A100 partition for the integer-grid-sides source-fix
+# validation on candidate 5e80c9f (NO temporal patch; grid-sides hunk only).
+#
+# Unique name + `default: false`: changes no shared cluster default.
+# cwd pinned to a fresh clone code/5e80c9f-gridsides (immutable old untouched).
+# Regular instrumented driver is used with the bounds dump ENABLED so that, if
+# the outer wrapper/trunk still fails on a later sqrt, its loop body is captured.
+# No semantics change; the old index-strength-reduction bypass is ABSENT.
+name: jz-a100-upedgrid
+gpu_type: A100
+remote_host: JZ
+default: false
+slurm:
+    account: msf@a100
+    job_name_prefix: UPEDGRID
+    gres: gpu
+    partition: null
+    constraint: a100
+    qos: qos_gpu_a100-t3
+    dev_qos: qos_gpu_a100-dev
+    max_time_hours: 20
+    default_time: "19:59:59"
+    dev_time: 01:59:59
+    min_time: "19:00:00"
+    use_min_time_default: true
+    hint: nomultithread
+    signal: SIGUSR1@600
+    output: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs/outputs/run%j.txt
+    error: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs/outputs/run%j.txt
+    require_tag: false
+resources:
+    gpu_per_node: 8
+    cpu_per_gpu: 8
+    task_mode: per_gpu
+    exclusive: false
+    multi_gpu_overrides:
+        trainer: ddp
+modules:
+    purge: true
+    load:
+        - arch/a100
+        - git
+environment:
+    shell_init: /linkhome/rech/genuvt01/uih12tb/.bashrc
+    activate_command: micromamba activate SatNew
+    exports:
+        SRUN_CPUS_PER_TASK: $SLURM_CPUS_PER_TASK
+        PYTHONPATH: ./src
+        TORCHDYNAMO_DISABLE: "0"
+        TORCHDYNAMO_VERBOSE: "1"
+        TORCH_LOGS: graph_breaks,recompiles
+        UPE_DIAGNOSTIC_DUMP_BOUNDS_DIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/boundsdump-upedgrid-20261028-225851
+        TORCHINDUCTOR_CACHE_DIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/inductor-grid-upedgrid-20261028-225851
+        TMPDIR: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/tmp
+        PYTHONDONTWRITEBYTECODE: "1"
+        WANDB__SERVICE_WAIT: "300"
+        WANDB_MODE: offline
+    wandb:
+        mode: offline
+        set_name: false
+        set_group: false
+paths:
+    remote_launcher_dir: upe_orch/launcher/jz-a100-upedgrid
+    default_project_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/code/5e80c9f-gridsides
+    data_dir: /lustre/fsn1/projects/rech/ufh/ult23zz/datasets/
+    log_dir: /lustre/fsn1/projects/rech/msf/uih12tb/upe_orch/logs
+default_overrides: {}
+features:
+    job_chaining: false
+launcher:
+    command_prefix: srun
+project: AnySat
